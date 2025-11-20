@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Prediction Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* General body styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #d0ecf8, #eaf1fa); /* Light blue gradient background */
+            color: #333;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            display: flex; /* Use flexbox for body to align sidebar and main content */
+        }
+
+        /* Hamburger menu icon styling */
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000; /* Ensure it's above other content */
+            background-color: #1d3557;
+            color: white;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px; /* Space between the lines */
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #27496d;
+        }
+
+        .sidebar-toggle .line {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 250px; /* Fixed width for the sidebar */
+            background-color: #1d3557; /* Dark blue background */
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            display: flex;
+            flex-direction: column;
+            position: fixed; /* Keep sidebar fixed */
+            height: 100%; /* Full height */
+            overflow-y: auto; /* Enable scrolling if content overflows */
+            left: 0; /* Position at the left edge */
+            transform: translateX(-100%); /* Initially hide off-screen */
+            transition: transform 0.3s ease-in-out; /* Smooth slide animation */
+            z-index: 999; /* Below the toggle button */
+        }
+
+        /* Class to show the sidebar */
+        body.sidebar-open .sidebar {
+            transform: translateX(0);
+        }
+
+        .sidebar h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #a0dbff; /* Lighter blue for heading */
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1; /* Allow ul to take available space */
+        }
+
+        .sidebar ul li {
+            margin-bottom: 15px;
+        }
+
+        .sidebar ul li a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: #27496d; /* Slightly lighter dark blue on hover */
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li a.active {
+            background: linear-gradient(90deg, #4facfe, #a0dbff); /* Blue gradient for active link */
+            color: #1d3557; /* Dark text for active link */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1; /* Allows main content to take remaining space */
+            padding: 20px; /* Add some padding to main content */
+            display: flex;
+            justify-content: center; /* Center the form within main content */
+            align-items: center; /* Center vertically */
+            min-height: 100vh; /* Ensure it takes full height */
+            box-sizing: border-box; /* Include padding in width */
+            margin-left: 0; /* Default: no offset */
+            transition: margin-left 0.3s ease-in-out; /* Smooth transition for content shift */
+        }
+
+        /* When sidebar is open, shift main content on larger screens */
+        body.sidebar-open .main-content {
+            margin-left: 250px;
+        }
+
+        /* Container within main content */
+        .container {
+            width: 90%; /* Responsive width */
+            max-width: 800px; /* Max width similar to your intro section */
+            margin: 0; /* Remove auto margin as parent (main-content) handles centering */
+            background-color: #ffffff;
+            padding: 30px 40px; /* Increased padding for better spacing */
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+            animation: fadeInUp 1s ease-in-out; /* Apply animation */
+            box-sizing: border-box; /* Include padding in width */
+            line-height: 1.6; /* Default line height for better readability */
+        }
+
+        h1 {
+            font-size: 36px; /* Larger, more impactful heading */
+            font-weight: 700; /* Bolder font weight */
+            text-align: center;
+            color: #1d3557; /* Dark blue from your theme */
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 10px; /* Space for the underline effect */
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 80px; /* Shorter underline */
+            height: 4px;
+            background: linear-gradient(135deg, #4facfe, #a0dbff); /* Blue gradient underline */
+            margin: 10px auto 0; /* Center the underline */
+            border-radius: 2px;
+        }
+
+        .disclaimer {
+            font-size: 16px;
+            color: #666;
+            margin-top: -15px; /* Adjust spacing after title */
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 25px; /* More vertical spacing between form groups */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px; /* Space between label and input */
+            font-weight: 600; /* Bolder label text */
+            color: #27496d; /* Consistent dark blue from your theme */
+            font-size: 17px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: calc(100% - 24px); /* Account for padding + border */
+            padding: 12px; /* Larger padding for inputs */
+            border: 1px solid #c2e9fb; /* Lighter border color */
+            border-radius: 8px; /* More rounded inputs */
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif; /* Ensure Poppins font */
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
+            -webkit-appearance: none; /* Remove default browser styling for consistency */
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: #4facfe; /* Highlight on focus */
+            outline: none; /* Remove default outline */
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Soft blue glow on focus */
+        }
+
+        .radio-group, .checkbox-group {
+            margin-top: 10px;
+            display: flex; /* Use flexbox for radio/checkbox groups */
+            flex-wrap: wrap; /* Allow items to wrap */
+            gap: 15px 25px; /* Space between items */
+        }
+
+        /* Custom Checkbox/Radio Styling */
+        .radio-group label, .checkbox-group label {
+            position: relative;
+            padding-left: 30px; /* Adjust this value if you change the indicator size */
+            display: flex; /* Helps with vertical alignment of text and indicator */
+            align-items: center; /* Center content vertically */
+            font-weight: 400; /* Normal weight for options */
+            font-size: 16px;
+            color: #444;
+            cursor: pointer;
+            min-height: 20px; /* Ensure enough height for the custom indicator */
+        }
+
+        /* Hide the default browser checkbox/radio */
+        .radio-group input[type="radio"],
+        .checkbox-group input[type="checkbox"] {
+            opacity: 0;
+            position: absolute;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        /* Style the custom visual indicator (the box/circle) */
+        .custom-control-indicator {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px; /* Size of the custom box/circle */
+            height: 20px; /* Size of the custom box/circle */
+            border: 2px solid #a1c4fd; /* Light blue border */
+            background-color: #eef7ff; /* Light background */
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            border-radius: 4px; /* Default for checkboxes */
+        }
+
+        /* Specific shape for radio buttons */
+        .radio-group .custom-control-indicator {
+            border-radius: 50%; /* Circle for radio */
+        }
+
+        /* When the input is checked, change the background and border of the indicator */
+        .checkbox-group input[type="checkbox"]:checked ~ .custom-control-indicator {
+            background-color: #4facfe; /* Blue background when checked */
+            border-color: #4facfe;
+        }
+
+        .radio-group input[type="radio"]:checked ~ .custom-control-indicator {
+            background-color: #4facfe; /* Blue background when checked */
+            border-color: #4facfe;
+        }
+
+        /* Checkmark/Dot for checked state (inside the indicator) */
+        .custom-control-indicator::after {
+            content: ''; /* Will be overridden for checkbox */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Checkmark for checkboxes */
+        .checkbox-group .custom-control-indicator::after {
+            content: '\2713'; /* Checkmark unicode */
+            font-size: 14px; /* Size of the checkmark */
+            color: white;
+        }
+
+        /* Dot for radio buttons */
+        .radio-group .custom-control-indicator::after {
+            width: 10px; /* Size of the dot */
+            height: 10px; /* Size of the dot */
+            border-radius: 50%;
+            background-color: white;
+        }
+
+        /* Show checkmark/dot when the input is checked */
+        .checkbox-group input[type="checkbox"]:checked ~ .custom-control-indicator::after,
+        .radio-group input[type="radio"]:checked ~ .custom-control-indicator::after {
+            opacity: 1;
+        }
+
+        button[type="submit"] {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #4facfe, #a0dbff);
+            border: none;
+            color: #1d3557; /* Dark text for contrast */
+            font-size: 19px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.15); /* Stronger button shadow */
+            margin-top: 30px;
+            width: 100%; /* Ensure button is full width */
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        .result {
+            margin-top: 40px;
+            padding: 25px;
+            border-radius: 12px;
+            background-color: #e9ecef; /* Default light grey background */
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for result box */
+        }
+        .result.predicted {
+            background-color: #eaf8ff; /* Light blue for prediction */
+            border: 1px solid #c2e9fb;
+            color: #1d3557; /* Dark blue text */
+        }
+        /* Styles for the predicted spend value */
+        .predicted-spend-value {
+            font-size: 2.8em; /* Much larger font size for the value */
+            font-weight: 800; /* Extra bold */
+            color: #007bff; /* A distinct blue for the main number */
+            margin: 15px 0 10px; /* Adjusted margin-bottom */
+            animation: fadeInScale 0.8s ease-out; /* Add a subtle animation */
+        }
+        .prediction-label {
+            font-size: 1.2em; /* Label for the predicted spend */
+            color: #555;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+
+        .prediction-text {
+            font-size: 1.4em; /* Larger prediction text */
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #1d3557; /* Consistent dark blue */
+        }
+        .insight-text {
+            font-size: 1em;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 0;
+            font-weight: 400;
+        }
+
+        /* NEW: Styles for chart container */
+        .chart-container {
+            width: 90%; /* Adjusted width for chart container */
+            max-width: 500px; /* Max width for chart */
+            margin: 20px auto; /* Centered horizontally */
+            position: relative; /* Needed for canvas sizing */
+            height: 200px; /* Fixed height for the chart area */
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        #spendChart {
+            width: 100% !important; /* Ensure canvas takes full width of its container */
+            height: 100% !important; /* Ensure canvas takes full height of its container */
+        }
+
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* NEW ANIMATION for predicted value */
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar-toggle {
+                top: 15px;
+                left: 15px;
+                padding: 8px 10px;
+            }
+            .sidebar-toggle .line {
+                width: 20px;
+                height: 2.5px;
+            }
+            .sidebar {
+                width: 200px; /* Slightly narrower sidebar on smaller screens when open */
+            }
+            body.sidebar-open .main-content {
+                margin-left: 0; /* Sidebar overlays, main content doesn't shift */
+            }
+            .container {
+                padding: 25px 30px;
+                margin: 20px auto;
+                max-width: 90%; /* Adjust for smaller screens */
+            }
+            h1 {
+                font-size: 30px;
+            }
+            label {
+                font-size: 16px;
+            }
+            input[type="text"], input[type="number"], select {
+                font-size: 15px;
+                padding: 10px;
+            }
+            .radio-group, .checkbox-group {
+                gap: 10px 15px;
+            }
+            .predicted-spend-value {
+                font-size: 2.2em;
+            }
+            .prediction-label {
+                font-size: 1em;
+            }
+            .insight-text {
+                font-size: 0.9em;
+            }
+            .chart-container {
+                width: 90%; /* Adjust chart container width */
+                height: 150px; /* Adjust chart height */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar-toggle {
+                top: 10px;
+                left: 10px;
+                padding: 6px 8px;
+            }
+            .sidebar-toggle .line {
+                width: 18px;
+                height: 2px;
+            }
+            .sidebar {
+                width: 100%; /* Sidebar takes full width on very small screens */
+                position: fixed; /* Keep it fixed */
+                height: 100vh; /* Full viewport height */
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            body.sidebar-open .main-content {
+                margin-left: 0; /* Main content still not shifted */
+            }
+            .container {
+                padding: 20px;
+                margin: 15px auto;
+                width: 95%; /* Wider on very small screens */
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            h1::after {
+                width: 60px;
+            }
+            .disclaimer {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+            label {
+                font-size: 15px;
+            }
+            input[type="text"], input[type="number"], select {
+                font-size: 14px;
+                padding: 8px;
+            }
+            button[type="submit"] {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+            .radio-group label, .checkbox-group label {
+                font-size: 14px;
+            }
+            .predicted-spend-value {
+                font-size: 1.8em;
+            }
+            .prediction-label {
+                font-size: 0.9em;
+            }
+            .insight-text {
+                font-size: 0.8em;
+            }
+            .chart-container {
+                width: 100%;
+                max-width: none;
+                height: 120px; /* Even smaller height for very small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+        <span class="line"></span>
+        <span class="line"></span>
+        <span class="line"></span>
+    </button>
+
+    <div class="sidebar">
+        <h2>SmartRetail</h2>
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('stockout_form_page') }}">Stock-Out Predictor</a></li>
+            <li><a href="{{ url_for('sales') }}" class="active">Sales Forecast</a></li>
+            <li><a href="{{ url_for('segmentation') }}">Customer Segmentation</a></li>
+            <li><a href="{{ url_for('recommendation') }}">Offer Recommendation</a></li>
+            <li><a href="{{ url_for('trend') }}">Trend Forecasting</a></li>
+            <li><a href="{{ url_for('category_optimization') }}">Category Optimization</a></li>
+            <li><a href="{{ url_for('retention_risk') }}">Retention Risk</a></li>
+            <li><a href="{{ url_for('upload') }}">Upload your data</a></li>
+            
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>Predict Estimated Monthly Expenditure</h1>
+            <p class="disclaimer">Provide customer details to estimate their typical monthly expenditure.</p>
+
+            <form id="salesPredictionForm">
+
+                <div class="form-group">
+                    <label for="Age_Group">Age Group</label>
+                    <select id="Age_Group" name="Age_Group" required>
+                        <option value="">--Select--</option>
+                        <option value="Under 18">Under 18</option>
+                        <option value="18–25">18–25</option>
+                        <option value="26–35">26–35</option>
+                        <option value="36–45">36–45</option>
+                        <option value="46–60">46–60</option>
+                        <option value="60+">60+</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="City_Town_Residence">City or Town of Residence</label>
+                    <input type="text" id="City_Town_Residence" name="City_Town_Residence" required placeholder="e.g., Chennai">
+                </div>
+
+                <div class="form-group">
+                    <label for="Monthly_Income_Range">Monthly Household Income Range</label>
+                    <select id="Monthly_Income_Range" name="Monthly_Income_Range" required>
+                        <option value="">--Select--</option>
+                        <option value="Below ₹20,000">Below ₹20,000</option>
+                        <option value="₹20,000 – ₹40,000">₹20,000 – ₹40,000</option>
+                        <option value="₹40,001 – ₹70,000">₹40,001 – ₹70,000</option>
+                        <option value="₹70,001 – ₹1,00,000">₹70,001 – ₹1,00,000</option>
+                        <option value="Above ₹1,00,000">Above ₹1,00,000</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Household_Size">Household Size</label>
+                    <input type="number" id="Household_Size" name="Household_Size" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="Shopping_Frequency">How often do you shop at supermarkets?</label>
+                    <select id="Shopping_Frequency" name="Shopping_Frequency" required>
+                        <option value="">--Select--</option>
+                        <option value="Daily">Daily</option>
+                        <option value="2–3 times a week">2–3 times a week</option>
+                        <option value="Once a week">Once a week</option>
+                        <option value="Twice a month">Twice a month</option>
+                        <option value="Rarely">Rarely</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Shopping_Trip_Duration">How much time do you usually spend during one shopping trip? (in minutes)</label>
+                    <input type="number" id="Shopping_Trip_Duration" name="Shopping_Trip_Duration" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Which product categories do you frequently buy? (Select all that apply)</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Groceries">
+                            <span class="control-label-text">Groceries</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Snacks">
+                            <span class="control-label-text">Snacks</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Dairy">
+                            <span class="control-label-text">Dairy</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Beverages">
+                            <span class="control-label-text">Beverages</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Personal Care">
+                            <span class="control-label-text">Personal Care</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Household Items">
+                            <span class="control-label-text">Household Items</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Fruits & Vegetables">
+                            <span class="control-label-text">Fruits & Vegetables</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Packaged Food">
+                            <span class="control-label-text">Packaged Food</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Other">
+                            <span class="control-label-text">Other</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Prefer_Offers">Do you prefer shopping when offers are available?</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="Prefer_Offers" value="Yes" required>
+                            <span class="control-label-text">Yes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Prefer_Offers" value="Sometimes">
+                            <span class="control-label-text">Sometimes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Prefer_Offers" value="No">
+                            <span class="control-label-text">No</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Which offer types do you prefer? (Select all that apply)</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="Offer_Types_Preferred" value="Flat Discount">
+                            <span class="control-label-text">Flat Discount</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Offer_Types_Preferred" value="Buy 1 Get 1 Free">
+                            <span class="control-label-text">Buy 1 Get 1 Free</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Offer_Types_Preferred" value="Cashback">
+                            <span class="control-label-text">Cashback</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Offer_Types_Preferred" value="Loyalty Points">
+                            <span class="control-label-text">Loyalty Points</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Offer_Types_Preferred" value="Free Gifts">
+                            <span class="control-label-text">Free Gifts</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Offers_Influence_Purchase">Do offers influence your purchase decision?</label>
+                    <select id="Offers_Influence_Purchase" name="Offers_Influence_Purchase" required>
+                        <option value="">--Select--</option>
+                        <option value="Strongly Agree">Strongly Agree</option>
+                        <option value="Agree">Agree</option>
+                        <option value="Neutral">Neutral</option>
+                        <option value="Disagree">Disagree</option>
+                        <option value="Strongly Disagree">Strongly Disagree</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Offer_Spend_Increase_Percentage">By what percentage do you typically increase the amount of money spent compared to your usual purchases? (e.g., 20 for 20%)</label>
+                    <input type="number" id="Offer_Spend_Increase_Percentage" name="Offer_Spend_Increase_Percentage" min="0" max="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Which categories do you prefer to buy during offers? (Select all that apply)</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Snacks">
+                            <span class="control-label-text">Snacks</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Beverages">
+                            <span class="control-label-text">Beverages</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Personal Care">
+                            <span class="control-label-text">Personal Care</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Household Items">
+                            <span class="control-label-text">Household Items</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Groceries">
+                            <span class="control-label-text">Groceries</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Fruits & Vegetables">
+                            <span class="control-label-text">Fruits & Vegetables</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Other">
+                            <span class="control-label-text">Other</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Purchase_Influence">What influences your purchase the most?</label>
+                    <select id="Purchase_Influence" name="Purchase_Influence" required>
+                        <option value="">--Select--</option>
+                        <option value="Price">Price</option>
+                        <option value="Quality">Quality</option>
+                        <option value="Brand">Brand</option>
+                        <option value="Offers/Discounts">Offers/Discounts</option>
+                        <option value="Convenience">Convenience</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Likely_Switch_Online_Shopping">How likely are you to switch to online shopping in the next 12 months? (% probability)</label>
+                    <input type="number" id="Likely_Switch_Online_Shopping" name="Likely_Switch_Online_Shopping" min="0" max="100" required>
+                </div>
+                
+                <button type="submit">Predict Sales</button>
+            </form>
+
+            <div id="predictionResult" class="result" style="display: none;">
+                <div class="prediction-label">Predicted Monthly Expenditure</div>
+                <div class="predicted-spend-value"></div>
+                <div class="chart-container">
+                    <canvas id="spendChart"></canvas>
+                </div>
+                <div class="insight-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Toggle Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const body = document.body;
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    body.classList.toggle('sidebar-open');
+                });
+            }
+        });
+
+        let spendChart; // Declare chart variable globally or in a scope accessible by the event listener
+
+        document.getElementById('salesPredictionForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = {};
+
+            // Collect all input values
+            for (const [key, value] of formData.entries()) {
+                // For multi-select checkboxes, collect all selected values into an array
+                if (key === 'Frequent_Categories' || key === 'Offer_Types_Preferred' || key === 'Categories_Buy_Offers') {
+                    if (!data[key]) {
+                        data[key] = [];
+                    }
+                    data[key].push(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            // Also, handle unchecked checkboxes for multi-selects explicitly setting them to an empty array
+            // This is important because FormData only includes checked boxes
+            const allCheckboxGroups = ['Frequent_Categories', 'Offer_Types_Preferred', 'Categories_Buy_Offers'];
+            allCheckboxGroups.forEach(groupName => {
+                const selectedCheckboxes = Array.from(form.querySelectorAll(`input[name="${groupName}"]:checked`)).map(cb => cb.value);
+                if (selectedCheckboxes.length === 0 && !data[groupName]) {
+                    data[groupName] = []; // Ensure it's an empty array if nothing is selected
+                } else if (selectedCheckboxes.length > 0 && !data[groupName]) {
+                     // This case handles when only one checkbox is selected and formData.entries() might not create an array immediately
+                     data[groupName] = selectedCheckboxes;
+                }
+            });
+
+
+            console.log("Form Data for Sales Prediction:", data);
+
+            const predictionResultDiv = document.getElementById('predictionResult');
+            const predictedSpendValueSpan = predictionResultDiv.querySelector('.predicted-spend-value');
+            const insightTextDiv = predictionResultDiv.querySelector('.insight-text');
+            const chartCanvas = document.getElementById('spendChart');
+            const chartContainer = document.querySelector('.chart-container');
+            const predictionLabel = predictionResultDiv.querySelector('.prediction-label');
+
+
+            // Clear previous results and hide
+            predictionResultDiv.style.display = 'none';
+            predictionResultDiv.classList.remove('predicted');
+            predictedSpendValueSpan.textContent = '';
+            insightTextDiv.textContent = '';
+            predictionLabel.style.display = 'none'; // Hide label initially
+            chartContainer.style.display = 'none'; // Hide chart container initially
+
+            // Destroy existing chart instance if it exists
+            if (spendChart) {
+                spendChart.destroy();
+            }
+
+
+            fetch('/predict_sales', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                predictionResultDiv.style.display = 'block';
+                predictionResultDiv.classList.add('predicted');
+                predictionLabel.style.display = 'block'; // Show label
+
+                const predictedSpend = parseFloat(result.predicted_spend);
+                const averageSpend = parseFloat(result.average_spend); 
+
+                predictedSpendValueSpan.textContent = `₹${predictedSpend.toLocaleString('en-IN')}`; // Format with Indian Rupee currency style
+
+                let insight = `Based on the provided customer profile, the predicted monthly expenditure is approximately ₹${predictedSpend.toLocaleString('en-IN')}.`;
+
+                if (averageSpend > 0) { // Only compare if average spend is meaningful
+                    const difference = predictedSpend - averageSpend;
+                    const percentageDifference = (difference / averageSpend) * 100;
+
+                    insight += ` The overall average monthly expenditure from your dataset is ₹${averageSpend.toLocaleString('en-IN')}.`;
+
+                    if (percentageDifference > 20) {
+                        insight += ` This predicted spend is significantly higher than the average, indicating a potentially high-value customer.`;
+                    } else if (percentageDifference > 5) {
+                        insight += ` This predicted spend is moderately higher than the average, suggesting above-average purchasing power.`;
+                    } else if (percentageDifference < -20) {
+                        insight += ` This predicted spend is significantly lower than the average, which might indicate a budget-conscious customer or one with different shopping patterns.`;
+                    } else if (percentageDifference < -5) {
+                        insight += ` This predicted spend is moderately lower than the average.`;
+                    } else {
+                        insight += ` This predicted spend is very close to the overall average, suggesting typical expenditure patterns.`;
+                    }
+                } else {
+                    insight += " (Average expenditure data was not available for comparison.)";
+                }
+                insightTextDiv.textContent = insight;
+
+                // Show and render the chart
+                chartContainer.style.display = 'block';
+
+                const ctx = chartCanvas.getContext('2d');
+                if (spendChart) {
+                    spendChart.destroy(); // Destroy previous chart instance if it exists
+                }
+                
+                // Determine max for y-axis scale based on predicted spend and average spend
+                const maxSpendForChart = Math.max(predictedSpend, averageSpend) * 1.2; 
+
+
+                spendChart = new Chart(ctx, {
+                    type: 'line', // Changed to line chart
+                    data: {
+                        labels: ['Predicted Spend', 'Average Spend'], // Labels for the two points
+                        datasets: [{
+                            label: 'Monthly Expenditure (₹)',
+                            data: [predictedSpend, averageSpend], // Both predicted and average spend data
+                            fill: false,
+                            borderColor: [
+                                'rgba(75, 192, 192, 1)', // Predicted Spend color
+                                'rgba(153, 102, 255, 1)' // Average Spend color
+                            ],
+                            backgroundColor: [
+                                'rgba(75, 192, 192, 0.8)',
+                                'rgba(153, 102, 255, 0.8)'
+                            ],
+                            tension: 0.1,
+                            pointRadius: 8,
+                            pointBackgroundColor: [
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            pointBorderColor: '#fff',
+                            pointHoverRadius: 10,
+                            pointHoverBackgroundColor: [
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            pointHoverBorderColor: 'rgba(220,220,220,1)',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true, // Show legend for two points
+                                position: 'bottom',
+                                labels: {
+                                    font: {
+                                        size: 14,
+                                        family: 'Poppins'
+                                    },
+                                    color: '#333'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (context.raw !== null) {
+                                            label += `: ₹${context.raw.toLocaleString('en-IN')}`;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: false,
+                                },
+                                ticks: {
+                                    display: true, // Show x-axis ticks
+                                    font: {
+                                        size: 12,
+                                        family: 'Poppins'
+                                    },
+                                    color: '#333'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Amount (₹)',
+                                    color: '#444',
+                                    font: {
+                                        size: 14,
+                                        family: 'Poppins'
+                                    }
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₹' + value.toLocaleString('en-IN');
+                                    },
+                                    font: {
+                                        size: 12,
+                                        family: 'Poppins'
+                                    }
+                                },
+                                max: maxSpendForChart,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+
+            })
+            .catch(error => {
+                console.error('Error during sales prediction:', error);
+                predictionResultDiv.style.display = 'block';
+                predictionResultDiv.classList.remove('predicted');
+                predictionResultDiv.style.backgroundColor = '#f8d7da';
+                predictionResultDiv.style.borderColor = '#f5c6cb';
+                predictedSpendValueSpan.textContent = `Error!`;
+                insightTextDiv.textContent = `Could not get sales prediction: ${error.message || 'Unknown error.'}`;
+                predictionLabel.style.display = 'none';
+                chartContainer.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

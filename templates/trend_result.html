@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trend Forecast Result</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #d0ecf8, #eaf1fa);
+      color: #333;
+      margin: 0;
+      padding: 40px 15px;
+    }
+
+    .outer-box {
+      background: #ffffff;
+      padding: 50px 30px;
+      border-radius: 20px;
+      max-width: 1100px;
+      margin: 40px auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      animation: fadeInUp 0.8s ease;
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .outer-box:hover {
+      transform: scale(1.02);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .section-header h2 {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #4facfe, #1d3557);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .section-header p {
+      color: #555;
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    .card-section {
+      background-color: #f9fcff;
+      padding: 25px 30px;
+      border-radius: 16px;
+      margin-bottom: 28px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+      transition: all 0.3s ease;
+    }
+
+    .card-section:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-section h5 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2b5ca9;
+      margin-bottom: 12px;
+    }
+
+    .card-section h4 {
+      font-size: 18px;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .card-section p {
+      font-size: 15px;
+      color: #333;
+      margin-top: 6px;
+    }
+
+    .chart-box img {
+      max-width: 65%;
+      border-radius: 12px;
+      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-box table {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table-box th {
+      background-color: #4facfe;
+      color: white;
+      font-weight: 600;
+    }
+
+    .table-box td {
+      color: #000;
+    }
+
+    .info-bullet {
+      background-color: #fefeff;
+      padding: 12px 20px;
+      border-left: 5px solid #4facfe;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 15px;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .btn-analyze {
+      padding: 14px 30px;
+      background: linear-gradient(135deg, #4facfe, #a0dbff);
+      border: none;
+      color: #1d3557;
+      font-size: 19px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.15);
+      margin-top: 30px;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-analyze:hover {
+      transform: translateY(-3px);
+      box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.25);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="outer-box">
+  <div class="section-header">
+    <h2>Trend Forecast Result</h2>
+    <p>Analyzing your shopping style vs. current market trends</p>
+  </div>
+
+  <div class="card-section">
+    <h5>Predicted Segment</h5>
+    <h4>{{ segment }}</h4>
+    <p>You belong to this segment based on your shopping behavior patterns and preferences.</p>
+  </div>
+
+  <div class="card-section">
+    <h5>Trend Match Score</h5>
+    <h4>{{ trend_score }}</h4>
+    <p>{{ advice }}</p>
+  </div>
+
+  {% if chart_path %}
+  <div class="card-section text-center chart-box">
+    <h5>Comparison Chart</h5>
+    <img src="{{ chart_path }}" alt="Trend Chart">
+  </div>
+  {% endif %}
+
+  {% if comparison_rows %}
+  <div class="card-section table-box">
+    <h5>Feature-by-Feature Comparison</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover text-center">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>You</th>
+            <th>Market</th>
+            <th>Gap</th>
+            <th>Interpretation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in comparison_rows %}
+          <tr>
+            <td>{{ row.feature }}</td>
+            <td>{{ row.you }}</td>
+            <td>{{ row.market }}</td>
+            <td>
+              {% if 'Off' in row.gap %}
+                <span class="text-danger fw-bold">{{ row.gap }}</span>
+              {% elif 'On' in row.gap %}
+                <span class="text-success fw-bold">{{ row.gap }}</span>
+              {% elif 'Partial' in row.gap %}
+                <span class="text-secondary fw-bold">{{ row.gap }}</span>
+              {% elif 'Ahead' in row.gap %}
+                <span class="text-primary fw-bold">{{ row.gap }}</span>
+              {% elif 'Lagging' in row.gap %}
+                <span class="text-warning fw-bold">{{ row.gap }}</span>
+              {% else %}
+                <span class="text-info fw-bold">{{ row.gap }}</span>
+              {% endif %}
+            </td>
+            <td>{{ row.interpretation }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if insights %}
+  <div class="card-section">
+    <h5>Key Insights</h5>
+    {% for insight in insights %}
+      <div class="info-bullet">{{ insight }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="text-center">
+    <a href="{{ url_for('trend') }}" class="btn-analyze">← Analyze Again</a>
+  </div>
+</div>
+
+</body>
+</html>

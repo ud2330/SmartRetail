@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Category Optimization</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Entire your full style (already perfect) -->
+  <style>
+        /* General body styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #d0ecf8, #eaf1fa); /* Light blue gradient background */
+            color: #333;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            display: flex; /* Use flexbox for body to align sidebar and main content */
+        }
+
+        /* Hamburger menu icon styling */
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000; /* Ensure it's above other content */
+            background-color: #1d3557;
+            color: white;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px; /* Space between the lines */
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #27496d;
+        }
+
+        .sidebar-toggle .line {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 250px; /* Fixed width for the sidebar */
+            background-color: #1d3557; /* Dark blue background */
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            display: flex;
+            flex-direction: column;
+            position: fixed; /* Keep sidebar fixed */
+            height: 100%; /* Full height */
+            overflow-y: auto; /* Enable scrolling if content overflows */
+            left: 0; /* Position at the left edge */
+            transform: translateX(-100%); /* Initially hide off-screen */
+            transition: transform 0.3s ease-in-out; /* Smooth slide animation */
+            z-index: 999; /* Below the toggle button */
+        }
+
+        /* Class to show the sidebar */
+        body.sidebar-open .sidebar {
+            transform: translateX(0);
+        }
+
+        .sidebar h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #a0dbff; /* Lighter blue for heading */
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1; /* Allow ul to take available space */
+        }
+
+        .sidebar ul li {
+            margin-bottom: 15px;
+        }
+
+        .sidebar ul li a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: #27496d; /* Slightly lighter dark blue on hover */
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li a.active {
+            background: linear-gradient(90deg, #4facfe, #a0dbff); /* Blue gradient for active link */
+            color: #1d3557; /* Dark text for active link */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1; /* Allows main content to take remaining space */
+            padding: 20px; /* Add some padding to main content */
+            display: flex;
+            justify-content: center; /* Center the form within main content */
+            align-items: center; /* Center vertically */
+            min-height: 100vh; /* Ensure it takes full height */
+            box-sizing: border-box; /* Include padding in width */
+            margin-left: 0; /* Default: no offset */
+            transition: margin-left 0.3s ease-in-out; /* Smooth transition for content shift */
+        }
+
+        /* When sidebar is open, shift main content on larger screens */
+        body.sidebar-open .main-content {
+            margin-left: 250px;
+        }
+
+        .container {
+            width: 90%; /* Responsive width */
+            max-width: 800px; /* Reverted to original max-width for the main form container */
+            margin: 0; /* Remove auto margin as parent (main-content) handles centering */
+            background-color: #ffffff;
+            padding: 30px 40px; /* Increased padding for better spacing */
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+            animation: fadeInUp 1s ease-in-out; /* Apply animation */
+            box-sizing: border-box; /* Include padding in width */
+            line-height: 1.6; /* Default line height for better readability */
+        }
+
+        h1 {
+            font-size: 36px; /* Larger, more impactful heading */
+            font-weight: 700; /* Bolder font weight */
+            text-align: center;
+            color: #1d3557; /* Dark blue from your theme */
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 10px; /* Space for the underline effect */
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 80px; /* Shorter underline */
+            height: 4px;
+            background: linear-gradient(135deg, #4facfe, #a0dbff); /* Blue gradient underline */
+            margin: 10px auto 0; /* Center the underline */
+            border-radius: 2px;
+        }
+
+        .disclaimer {
+            font-size: 16px;
+            color: #666;
+            margin-top: -15px; /* Adjust spacing after title */
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 25px; /* More vertical spacing between form groups */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px; /* Space between label and input */
+            font-weight: 600; /* Bolder label text */
+            color: #27496d; /* Consistent dark blue from your theme */
+            font-size: 17px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: calc(100% - 24px); /* Account for padding + border */
+            padding: 12px; /* Larger padding for inputs */
+            border: 1px solid #c2e9fb; /* Lighter border color */
+            border-radius: 8px; /* More rounded inputs */
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif; /* Ensure Poppins font */
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
+            -webkit-appearance: none; /* Remove default browser styling for consistency */
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: #4facfe; /* Highlight on focus */
+            outline: none; /* Remove default outline */
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Soft blue glow on focus */
+        }
+
+        .radio-group, .checkbox-group {
+            margin-top: 10px;
+            display: flex; /* Use flexbox for radio/checkbox groups */
+            flex-wrap: wrap; /* Allow items to wrap */
+            gap: 15px 25px; /* Space between items */
+        }
+
+        /* Custom Checkbox/Radio Styling */
+        .radio-group label, .checkbox-group label {
+            position: relative;
+            padding-left: 30px; /* Adjust this value if you change the indicator size */
+            display: flex; /* Helps with vertical alignment of text and indicator */
+            align-items: center; /* Center content vertically */
+            font-weight: 400; /* Normal weight for options */
+            font-size: 16px;
+            color: #444;
+            cursor: pointer;
+            min-height: 20px; /* Ensure enough height for the custom indicator */
+        }
+
+        /* Hide the default browser checkbox/radio */
+        .radio-group input[type="radio"],
+        .checkbox-group input[type="checkbox"] {
+            opacity: 0;
+            position: absolute;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        /* Style the custom visual indicator (the box/circle) */
+        .custom-control-indicator {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px; /* Size of the custom box/circle */
+            height: 20px; /* Size of the custom box/circle */
+            border: 2px solid #a1c4fd; /* Light blue border */
+            background-color: #eef7ff; /* Light background */
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            border-radius: 4px; /* Default for checkboxes */
+        }
+
+        /* Specific shape for radio buttons */
+        .radio-group .custom-control-indicator {
+            border-radius: 50%; /* Circle for radio */
+        }
+
+        /* When the input is checked, change the background and border of the indicator */
+        .checkbox-group input[type="checkbox"]:checked ~ .custom-control-indicator {
+            background-color: #4facfe; /* Blue background when checked */
+            border-color: #4facfe;
+        }
+
+        .radio-group input[type="radio"]:checked ~ .custom-control-indicator {
+            background-color: #4facfe; /* Blue background when checked */
+            border-color: #4facfe;
+        }
+
+        /* Checkmark/Dot for checked state (inside the indicator) */
+        .custom-control-indicator::after {
+            content: ''; /* Will be overridden for checkbox */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Checkmark for checkboxes */
+        .checkbox-group .custom-control-indicator::after {
+            content: '\2713'; /* Checkmark unicode */
+            font-size: 14px; /* Size of the checkmark */
+            color: white;
+        }
+
+        /* Dot for radio buttons */
+        .radio-group .custom-control-indicator::after {
+            width: 10px; /* Size of the dot */
+            height: 10px; /* Size of the dot */
+            border-radius: 50%;
+            background-color: white;
+        }
+
+        /* Show checkmark/dot when the input is checked */
+        .checkbox-group input[type="checkbox"]:checked ~ .custom-control-indicator::after,
+        .radio-group input[type="radio"]:checked ~ .custom-control-indicator::after {
+            opacity: 1;
+        }
+
+        button[type="submit"] {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #4facfe, #a0dbff);
+            border: none;
+            color: #1d3557; /* Dark text for contrast */
+            font-size: 19px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px; /* Consistent rounded corners */
+            transition: all 0.3s ease;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.15); /* Stronger button shadow */
+            margin-top: 30px;
+            width: 100%; /* Ensure button is full width */
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        #conditionalQuestions {
+            border: 1px dashed #c2e9fb; /* Dotted border for conditional section */
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            background-color: #f7fcff; /* Slightly lighter background */
+        }
+
+        .result {
+            margin-top: 40px;
+            padding: 25px;
+            border-radius: 12px;
+            background-color: #e9ecef; /* Default light grey background */
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for result box */
+        }
+        .result.likely {
+            background-color: #ffe8e8; /* Lighter red for likely */
+            border-color: #ffcccc;
+            color: #c0392b; /* Darker red text */
+        }
+        .result.unlikely {
+            background-color: #e8ffe8; /* Lighter green for unlikely */
+            border-color: #ccffcc;
+            color: #27ae60; /* Darker green text */
+        }
+        .prediction-text {
+            font-size: 1.4em; /* Larger prediction text */
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #1d3557; /* Consistent dark blue */
+        }
+        .probability-text {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .insight-text {
+            font-size: 1em;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+        .chart-container {
+            width: 100%; /* Make it take full width of its parent (.result) */
+            max-width: 500px; /* INCREASED MAX WIDTH for the graph container */
+            margin: 25px auto 0; /* Centered horizontally within .result */
+            background-color: #fff;
+            padding: 20px; /* Increased padding inside the chart container */
+            border-radius: 10px; /* Slightly more rounded corners for the chart box */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Stronger, more prominent shadow */
+            min-height: 0px; /* Increased min-height to give chart more vertical space */
+            display: flex;
+            align-items: center; /* Center content vertically */
+            justify-content: center; /* Center content horizontally */
+        }
+        #probabilityChart {
+            width: 100% !important;
+            height: 150px !important; /* Explicit height for the canvas to control chart size */
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar-toggle {
+                top: 15px;
+                left: 15px;
+                padding: 8px 10px;
+            }
+            .sidebar-toggle .line {
+                width: 20px;
+                height: 2.5px;
+            }
+            .sidebar {
+                width: 200px; /* Slightly narrower sidebar on smaller screens when open */
+            }
+            body.sidebar-open .main-content {
+                margin-left: 0; /* Sidebar overlays, main content doesn't shift */
+            }
+            .container {
+                padding: 25px 30px;
+                margin: 20px auto;
+                max-width: 90%; /* Adjust for smaller screens */
+            }
+            h1 {
+                font-size: 30px;
+            }
+            label {
+                font-size: 16px;
+            }
+            input[type="text"], input[type="number"], select {
+                font-size: 15px;
+                padding: 10px;
+            }
+            .radio-group, .checkbox-group {
+                gap: 10px 15px;
+            }
+            .prediction-text {
+                font-size: 1.2em;
+            }
+            .probability-text {
+                font-size: 0.95em;
+            }
+            .insight-text {
+                font-size: 0.9em;
+            }
+            .chart-container {
+                width: 90%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar-toggle {
+                top: 10px;
+                left: 10px;
+                padding: 6px 8px;
+            }
+            .sidebar-toggle .line {
+                width: 18px;
+                height: 2px;
+            }
+            .sidebar {
+                width: 100%; /* Sidebar takes full width on very small screens */
+                position: fixed; /* Keep it fixed */
+                height: 100vh; /* Full viewport height */
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            body.sidebar-open .main-content {
+                margin-left: 0; /* Main content still not shifted */
+            }
+            .container {
+                padding: 20px;
+                margin: 15px auto;
+                width: 95%; /* Wider on very small screens */
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            h1::after {
+                width: 60px;
+            }
+            .disclaimer {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+            label {
+                font-size: 15px;
+            }
+            input[type="text"], input[type="number"], select {
+                font-size: 14px;
+                padding: 8px;
+            }
+            button[type="submit"] {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+            .radio-group label, .checkbox-group label {
+                font-size: 14px;
+            }
+            .prediction-text {
+                font-size: 1.1em;
+            }
+            .probability-text {
+                font-size: 0.85em;
+            }
+            .insight-text {
+                font-size: 0.8em;
+            }
+            .chart-container {
+                width: 100%;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="main-content">
+  <div class="container">
+    <h1>Category Optimization</h1>
+
+    <div id="alertBox" class="alert alert-danger d-none" role="alert" aria-live="assertive">
+      ⚠ Please fill all required fields before submitting.
+    </div>
+
+    <form id="categoryForm" method="POST" action="{{ url_for('category') }}" novalidate>
+
+      <!-- Question 1 -->
+      <div class="form-group">
+        <label>Which product categories do you frequently buy? *</label>
+        <div class="checkbox-group">
+          {% set cat_list = ['Groceries','Snacks','Dairy','Beverages','Personal Care','Household Items','Fruits & Vegetables','Packaged Food'] %}
+          {% for item in cat_list %}
+          <label>
+            <input type="checkbox" name="frequent_categories" value="{{ item }}">
+            <span class="custom-control-indicator"></span> {{ item }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Question 2 -->
+      <div class="form-group">
+        <label>Which categories do you prefer to buy during offers? *</label>
+        <div class="checkbox-group">
+          {% for item in cat_list %}
+          <label>
+            <input type="checkbox" name="offer_categories" value="{{ item }}">
+            <span class="custom-control-indicator"></span> {{ item }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Question 3 -->
+      <div class="form-group">
+        <label>Do you use price comparison/shopping apps before buying? *</label>
+        <div class="radio-group">
+          <label>
+            <input type="radio" name="price_comparison" value="Yes">
+            <span class="custom-control-indicator"></span> Yes
+          </label>
+          <label>
+            <input type="radio" name="price_comparison" value="No">
+            <span class="custom-control-indicator"></span> No
+          </label>
+        </div>
+      </div>
+
+      <!-- Question 4 -->
+      <div class="form-group">
+        <label>Which offer types do you prefer? *</label>
+        <div class="checkbox-group">
+          {% set offers = ['Flat Discount', 'Buy 1 Get 1 Free', 'Cashback', 'Loyalty Points', 'Free Gifts'] %}
+          {% for offer in offers %}
+          <label>
+            <input type="checkbox" name="offer_types" value="{{ offer }}">
+            <span class="custom-control-indicator"></span> {{ offer }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Question 5 -->
+      <div class="form-group">
+        <label>Do you consider eco-friendliness when choosing products? *</label>
+        <div class="radio-group">
+          <label>
+            <input type="radio" name="eco_friendly" value="Yes">
+            <span class="custom-control-indicator"></span> Yes
+          </label>
+          <label>
+            <input type="radio" name="eco_friendly" value="No">
+            <span class="custom-control-indicator"></span> No
+          </label>
+          <label>
+            <input type="radio" name="eco_friendly" value="Sometimes">
+            <span class="custom-control-indicator"></span> Sometimes
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="text-center mt-4">
+        <button type="submit">Generate Insights</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ✅ Full Working Validation Script -->
+<script>
+document.getElementById("categoryForm").addEventListener("submit", function (event) {
+  const alertBox = document.getElementById("alertBox");
+  alertBox.classList.add("d-none");
+
+  let allValid = true;
+
+  // Check checkbox groups
+  ['frequent_categories', 'offer_categories', 'offer_types'].forEach(groupName => {
+    const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
+    if (![...checkboxes].some(cb => cb.checked)) {
+      allValid = false;
+    }
+  });
+
+  // Check radio groups
+  ['price_comparison', 'eco_friendly'].forEach(groupName => {
+    const radios = document.querySelectorAll(`input[name="${groupName}"]`);
+    if (![...radios].some(rb => rb.checked)) {
+      allValid = false;
+    }
+  });
+
+  if (!allValid) {
+    event.preventDefault();
+    alertBox.classList.remove("d-none");
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offer Recommendation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* General body styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #d0ecf8, #eaf1fa); /* Light blue gradient background */
+            color: #333;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            display: flex; /* Use flexbox for body to align sidebar and main content */
+        }
+
+        /* Hamburger menu icon styling */
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000; /* Ensure it's above other content */
+            background-color: #1d3557;
+            color: white;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px; /* Space between the lines */
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #27496d;
+        }
+
+        .sidebar-toggle .line {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 250px; /* Fixed width for the sidebar */
+            background-color: #1d3557; /* Dark blue background */
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            display: flex;
+            flex-direction: column;
+            position: fixed; /* Keep sidebar fixed */
+            height: 100%; /* Full height */
+            overflow-y: auto; /* Enable scrolling if content overflows */
+            left: 0; /* Position at the left edge */
+            transform: translateX(-100%); /* Initially hide off-screen */
+            transition: transform 0.3s ease-in-out; /* Smooth slide animation */
+            z-index: 999; /* Below the toggle button */
+        }
+
+        /* Class to show the sidebar */
+        body.sidebar-open .sidebar {
+            transform: translateX(0);
+        }
+
+        .sidebar h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #a0dbff; /* Lighter blue for heading */
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1; /* Allow ul to take available space */
+        }
+
+        .sidebar ul li {
+            margin-bottom: 15px;
+        }
+
+        .sidebar ul li a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: #27496d; /* Slightly lighter dark blue on hover */
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li a.active {
+            background: linear-gradient(90deg, #4facfe, #a0dbff); /* Blue gradient for active link */
+            color: #1d3557; /* Dark text for active link */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1; /* Allows main content to take remaining space */
+            padding: 20px; /* Add some padding to main content */
+            display: flex;
+            justify-content: center; /* Center the form within main content */
+            align-items: center; /* Center vertically */
+            min-height: 100vh; /* Ensure it takes full height */
+            box-sizing: border-box; /* Include padding in width */
+            margin-left: 0; /* Default: no offset */
+            transition: margin-left 0.3s ease-in-out; /* Smooth transition for content shift */
+        }
+
+        /* When sidebar is open, shift main content on larger screens */
+        body.sidebar-open .main-content {
+            margin-left: 250px;
+        }
+
+        /* Container within main content */
+        .container {
+            width: 90%; /* Responsive width */
+            max-width: 800px; /* Max width similar to your intro section */
+            margin: 0; /* Remove auto margin as parent (main-content) handles centering */
+            background-color: #ffffff;
+            padding: 30px 40px; /* Increased padding for better spacing */
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+            animation: fadeInUp 1s ease-in-out; /* Apply animation */
+            box-sizing: border-box; /* Include padding in width */
+            line-height: 1.6; /* Default line height for better readability */
+        }
+
+        h1 {
+            font-size: 36px; /* Larger, more impactful heading */
+            font-weight: 700; /* Bolder font weight */
+            text-align: center;
+            color: #1d3557; /* Dark blue from your theme */
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 10px; /* Space for the underline effect */
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 80px; /* Shorter underline */
+            height: 4px;
+            background: linear-gradient(135deg, #4facfe, #a0dbff); /* Blue gradient underline */
+            margin: 10px auto 0; /* Center the underline */
+            border-radius: 2px;
+        }
+
+        .disclaimer {
+            font-size: 16px;
+            color: #666;
+            margin-top: -15px; /* Adjust spacing after title */
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 25px; /* More vertical spacing between form groups */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px; /* Space between label and input */
+            font-weight: 600; /* Bolder label text */
+            color: #27496d; /* Consistent dark blue from your theme */
+            font-size: 17px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: calc(100% - 24px); /* Account for padding + border */
+            padding: 12px; /* Larger padding for inputs */
+            border: 1px solid #c2e9fb; /* Lighter border color */
+            border-radius: 8px; /* More rounded inputs */
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif; /* Ensure Poppins font */
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
+            -webkit-appearance: none; /* Remove default browser styling for consistency */
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: #4facfe; /* Highlight on focus */
+            outline: none; /* Remove default outline */
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Soft blue glow on focus */
+        }
+
+        .radio-group, .checkbox-group {
+            margin-top: 10px;
+            display: flex; /* Use flexbox for radio/checkbox groups */
+            flex-wrap: wrap; /* Allow items to wrap */
+            gap: 15px 25px; /* Space between items */
+        }
+
+        /* Custom Checkbox/Radio Styling */
+        .radio-group label, .checkbox-group label {
+            position: relative;
+            padding-left: 30px; /* Adjust this value if you change the indicator size */
+            display: flex; /* Helps with vertical alignment of text and indicator */
+            align-items: center; /* Center content vertically */
+            font-weight: 400; /* Normal weight for options */
+            font-size: 16px;
+            color: #444;
+            cursor: pointer;
+            min-height: 20px; /* Ensure enough height for the custom indicator */
+        }
+
+        /* Hide the default browser checkbox/radio */
+        .radio-group input[type="radio"],
+        .checkbox-group input[type="checkbox"] {
+            opacity: 0;
+            position: absolute;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        /* Style the custom visual indicator (the box/circle) */
+        .custom-control-indicator {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px; /* Size of the custom box/circle */
+            height: 20px; /* Size of the custom box/circle */
+            border: 2px solid #a1c4fd; /* Light blue border */
+            background-color: #eef7ff; /* Light background */
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            border-radius: 4px; /* Default for checkboxes */
+        }
+
+        /* Specific shape for radio buttons */
+        .radio-group .custom-control-indicator {
+            border-radius: 50%; /* Circle for radio */
+        }
+
+        /* When the input is checked, change the background and border of the indicator */
+        .checkbox-group input[type="checkbox"]:checked ~ .custom-control-indicator {
+            background-color: #4facfe; /* Blue background when checked */
+            border-color: #4facfe;
+        }
+
+        .radio-group input[type="radio"]:checked ~ .custom-control-indicator {
+            background-color: #4facfe; /* Blue background when checked */
+            border-color: #4facfe;
+        }
+
+        /* Checkmark/Dot for checked state (inside the indicator) */
+        .custom-control-indicator::after {
+            content: ''; /* Will be overridden for checkbox */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Checkmark for checkboxes */
+        .checkbox-group .custom-control-indicator::after {
+            content: '\2713'; /* Checkmark unicode */
+            font-size: 14px; /* Size of the checkmark */
+            color: white;
+        }
+
+        /* Dot for radio buttons */
+        .radio-group .custom-control-indicator::after {
+            width: 10px; /* Size of the dot */
+            height: 10px; /* Size of the dot */
+            border-radius: 50%;
+            background-color: white;
+        }
+
+        /* Show checkmark/dot when the input is checked */
+        .checkbox-group input[type="checkbox"]:checked ~ .custom-control-indicator::after,
+        .radio-group input[type="radio"]:checked ~ .custom-control-indicator::after {
+            opacity: 1;
+        }
+
+        button[type="submit"] {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #4facfe, #a0dbff);
+            border: none;
+            color: #1d3557; /* Dark text for contrast */
+            font-size: 19px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.15); /* Stronger button shadow */
+            margin-top: 30px;
+            width: 100%; /* Ensure button is full width */
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        /* NEW/UPDATED: Styles for the recommendation result section */
+        .result-section {
+            margin-top: 40px;
+            padding: 25px;
+            background-color: #e9f5ff; /* Light blue background for the result section */
+            border-radius: 12px;
+            border: 1px solid #a0dbff;
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out forwards;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .result-section h3 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1d3557;
+            margin-bottom: 15px;
+        }
+        .result-section p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .offer-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid for cards */
+            gap: 20px;
+            margin-top: 20px;
+            padding: 10px; /* Some padding around the grid */
+        }
+        .offer-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* More prominent shadow */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: 2px solid transparent; /* Default transparent border */
+        }
+        .offer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+        .offer-card.recommended {
+            border-color: #28a745; /* Green border for recommended */
+            background-color: #e6ffe6; /* Very light green background */
+        }
+        .offer-card.not-recommended {
+            border-color: #dc3545; /* Red border for not recommended */
+            background-color: #ffe6e6; /* Very light red background */
+            opacity: 0.8; /* Slightly faded */
+        }
+        .offer-icon {
+            font-size: 48px; /* Larger icons */
+            color: #007bff; /* Primary blue for icons */
+            margin-bottom: 15px;
+        }
+        .offer-card.recommended .offer-icon {
+            color: #28a745; /* Green for recommended icons */
+        }
+        .offer-card.not-recommended .offer-icon {
+            color: #dc3545; /* Red for not recommended icons */
+        }
+        .offer-title {
+            font-size: 20px;
+            font-weight: 700; /* Bolder title */
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .offer-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            min-height: 40px; /* Ensure consistent height for descriptions */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .probability-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            height: 10px;
+            margin-bottom: 8px;
+            overflow: hidden; /* Ensure bar stays within container */
+        }
+        .probability-bar {
+            background-color: #007bff; /* Blue for the bar */
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.6s ease-in-out; /* Smoother animation for bar */
+        }
+        .offer-card.recommended .probability-bar {
+            background-color: #28a745; /* Green bar for recommended */
+        }
+        .offer-card.not-recommended .probability-bar {
+            background-color: #dc3545; /* Red bar for not recommended */
+        }
+        .probability-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+        /* Hide element utility class */
+        .hidden {
+            display: none;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar-toggle {
+                top: 15px;
+                left: 15px;
+                padding: 8px 10px;
+            }
+            .sidebar-toggle .line {
+                width: 20px;
+                height: 2.5px;
+            }
+            .sidebar {
+                width: 200px;
+            }
+            body.sidebar-open .main-content {
+                margin-left: 0;
+            }
+            .container {
+                padding: 25px 30px;
+                margin: 20px auto;
+                max-width: 90%;
+            }
+            h1 {
+                font-size: 30px;
+            }
+            label {
+                font-size: 16px;
+            }
+            input[type="text"], input[type="number"], select {
+                font-size: 15px;
+                padding: 10px;
+            }
+            .radio-group, .checkbox-group {
+                gap: 10px 15px;
+            }
+            /* Adjusted for new output section */
+            .result-section h3 {
+                font-size: 20px;
+            }
+            .offer-card-grid {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            }
+            .offer-card {
+                padding: 15px;
+            }
+            .offer-icon {
+                font-size: 40px;
+            }
+            .offer-title {
+                font-size: 18px;
+            }
+            .offer-description {
+                font-size: 13px;
+                min-height: 35px;
+            }
+            .probability-text {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar-toggle {
+                top: 10px;
+                left: 10px;
+                padding: 6px 8px;
+            }
+            .sidebar-toggle .line {
+                width: 18px;
+                height: 2px;
+            }
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                height: 100vh;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            body.sidebar-open .main-content {
+                margin-left: 0;
+            }
+            .container {
+                padding: 20px;
+                margin: 15px auto;
+                width: 95%;
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            h1::after {
+                width: 60px;
+            }
+            .disclaimer {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+            label {
+                font-size: 15px;
+            }
+            input[type="text"], input[type="number"], select {
+                font-size: 14px;
+                padding: 8px;
+            }
+            button[type="submit"] {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+            .radio-group label, .checkbox-group label {
+                font-size: 14px;
+            }
+            /* Adjusted for new output section */
+            .result-section h3 {
+                font-size: 18px;
+            }
+            .offer-card-grid {
+                grid-template-columns: 1fr; /* Single column on very small screens */
+            }
+            .offer-icon {
+                font-size: 36px;
+            }
+            .offer-title {
+                font-size: 16px;
+            }
+            .offer-description {
+                font-size: 12px;
+                min-height: auto;
+            }
+            .probability-text {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+        <span class="line"></span>
+        <span class="line"></span>
+        <span class="line"></span>
+    </button>
+
+    <div class="sidebar">
+        <h2>SmartRetail</h2>
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('stockout_form_page') }}">Stock-Out Predictor</a></li>
+            <li><a href="{{ url_for('sales') }}">Sales Forecast</a></li>
+            <li><a href="{{ url_for('segmentation') }}">Customer Segmentation</a></li>
+            <li><a href="{{ url_for('recommendation') }}" class="active">Offer Recommendation</a></li>
+            <li><a href="{{ url_for('trend') }}">Trend Forecasting</a></li>
+            <li><a href="{{ url_for('category_optimization') }}">Category Optimization</a></li>
+            <li><a href="{{ url_for('retention_risk') }}">Retention Risk</a></li>
+            <li><a href="{{ url_for('upload') }}">Upload your data</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>Offer Recommendation</h1>
+            <p class="disclaimer">Provide customer details to receive personalized offer recommendations.</p>
+
+            <form id="offerRecommendationForm">
+                
+                <div class="form-group">
+                    <label for="Household_Size">Household Size</label>
+                    <input type="number" id="Household_Size" name="Household_Size" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="Monthly_Grocery_Spend">How much do you typically spend on groceries per month? (Numeric input)</label>
+                    <input type="number" id="Monthly_Grocery_Spend" name="Monthly_Grocery_Spend" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="Shopping_Trip_Duration">How much time do you usually spend during one shopping trip? (in minutes)</label>
+                    <input type="number" id="Shopping_Trip_Duration" name="Shopping_Trip_Duration" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Which product categories do you frequently buy? (Select all that apply)</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Groceries">
+                            <span class="control-label-text">Groceries</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Snacks">
+                            <span class="control-label-text">Snacks</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Dairy">
+                            <span class="control-label-text">Dairy</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Beverages">
+                            <span class="control-label-text">Beverages</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Personal Care">
+                            <span class="control-label-text">Personal Care</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Household Items">
+                            <span class="control-label-text">Household Items</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Fruits & Vegetables">
+                            <span class="control-label-text">Fruits & Vegetables</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Packaged Food">
+                            <span class="control-label-text">Packaged Food</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Other">
+                            <span class="control-label-text">Other</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="Prefer_Offers">Do you prefer shopping when offers are available?</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="Prefer_Offers" value="Yes" required>
+                            <span class="control-label-text">Yes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Prefer_Offers" value="Sometimes">
+                            <span class="control-label-text">Sometimes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Prefer_Offers" value="No">
+                            <span class="control-label-text">No</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Offers_Influence_Purchase">Do offers influence your purchase decision?</label>
+                    <select id="Offers_Influence_Purchase" name="Offers_Influence_Purchase" required>
+                        <option value="">--Select--</option>
+                        <option value="Strongly Agree">Strongly Agree</option>
+                        <option value="Agree">Agree</option>
+                        <option value="Neutral">Neutral</option>
+                        <option value="Disagree">Disagree</option>
+                        <option value="Strongly Disagree">Strongly Disagree</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Offer_Spend_Increase_Percentage">By what percentage do you typically increase the amount of money spent compared to your usual purchases? (e.g., 20 for 20%)</label>
+                    <input type="number" id="Offer_Spend_Increase_Percentage" name="Offer_Spend_Increase_Percentage" min="0" max="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Which categories do you prefer to buy during offers? (Select all that apply)</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Snacks">
+                            <span class="control-label-text">Snacks</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Beverages">
+                            <span class="control-label-text">Beverages</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Personal Care">
+                            <span class="control-label-text">Personal Care</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Household Items">
+                            <span class="control-label-text">Household Items</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Groceries">
+                            <span class="control-label-text">Groceries</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Fruits & Vegetables">
+                            <span class="control-label-text">Fruits & Vegetables</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Categories_Buy_Offers" value="Other">
+                            <span class="control-label-text">Other</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Shopping_Style">How would you describe your shopping style?</label>
+                    <select id="Shopping_Style" name="Shopping_Style" required>
+                        <option value="">--Select--</option>
+                        <option value="Planner (I make a list and stick to it)">Planner (I make a list and stick to it)</option>
+                        <option value="Flexible (I have a list but am open to changes)">Flexible (I have a list but am open to changes)</option>
+                        <option value="Impulsive (I shop based on what I see)">Impulsive (I shop based on what I see)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Brand_Loyalty">On a scale of 1–5, how loyal are you to your preferred brands?</label>
+                    <select id="Brand_Loyalty" name="Brand_Loyalty" required>
+                        <option value="">--Select--</option>
+                        <option value="1">1 (Not at all)</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Very loyal)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="Eco_Friendliness">Do you consider eco-friendliness when choosing a product?</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="Eco_Friendliness" value="Yes" required>
+                            <span class="control-label-text">Yes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Eco_Friendliness" value="No">
+                            <span class="control-label-text">No</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Eco_Friendliness" value="Sometimes">
+                            <span class="control-label-text">Sometimes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Likely_Switch_Online_Shopping">How likely are you to switch to online shopping in the next 12 months? (% probability)</label>
+                    <input type="number" id="Likely_Switch_Online_Shopping" name="Likely_Switch_Online_Shopping" min="0" max="100" required>
+                </div>
+                
+                <button type="submit">Get Offer Recommendation</button>
+            </form>
+
+            <div id="recommendationResult" class="result-section hidden">
+                <h3>Your Personalized Offer Recommendations:</h3>
+                <p id="recommendationText"></p>
+                <div id="offerCardsContainer" class="offer-card-grid">
+                    <!-- Offer cards will be dynamically loaded here by JavaScript -->
+                </div>
+                <p id="noRecommendationMessage" style="display: none;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Toggle Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const body = document.body;
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    body.classList.toggle('sidebar-open');
+                });
+            }
+        });
+
+        document.getElementById('offerRecommendationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = {};
+
+            // Collect all input values
+            for (const [key, value] of formData.entries()) {
+                // For multi-select checkboxes, collect all selected values into an array
+                if (key === 'Frequent_Categories' || key === 'Categories_Buy_Offers') {
+                    if (!data[key]) {
+                        data[key] = [];
+                    }
+                    data[key].push(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            // Also, handle unchecked checkboxes for multi-selects explicitly setting them to an empty array
+            // This is important because FormData only includes checked boxes
+            const allCheckboxGroups = ['Frequent_Categories', 'Categories_Buy_Offers'];
+            allCheckboxGroups.forEach(groupName => {
+                const selectedCheckboxes = Array.from(form.querySelectorAll(`input[name="${groupName}"]:checked`)).map(cb => cb.value);
+                if (selectedCheckboxes.length === 0 && !data[groupName]) {
+                    data[groupName] = []; // Ensure it's an empty array if nothing is selected
+                } else if (selectedCheckboxes.length > 0 && !data[groupName]) {
+                     // This case handles when only one checkbox is selected and formData.entries() might not create an array immediately
+                     data[groupName] = selectedCheckboxes;
+                }
+            });
+
+
+            console.log("Form Data for Offer Recommendation:", data);
+
+            const recommendationResultDiv = document.getElementById('recommendationResult');
+            const recommendationTextElem = document.getElementById('recommendationText');
+            const offerCardsContainer = document.getElementById('offerCardsContainer');
+            const noRecommendationMessage = document.getElementById('noRecommendationMessage');
+
+            // Clear previous results and hide section initially
+            recommendationResultDiv.classList.add('hidden');
+            recommendationResultDiv.classList.remove('recommended', 'error'); /* Clean up previous styles */
+            recommendationResultDiv.style.backgroundColor = ''; /* Clear inline styles */
+            recommendationResultDiv.style.borderColor = ''; /* Clear inline styles */
+
+            recommendationTextElem.textContent = '';
+            offerCardsContainer.innerHTML = '';
+            noRecommendationMessage.style.display = 'none';
+
+
+            fetch('/predict_recommendation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log("Recommendation Result:", result);
+                recommendationResultDiv.classList.remove('hidden'); // Show the result section
+                recommendationResultDiv.classList.add('recommended'); // Add success style
+
+                recommendationTextElem.textContent = result.recommendation_text;
+
+                // Define icons for each offer type (using Font Awesome)
+                const offerIcons = {
+                    'Flat Discount': '<i class="fas fa-tags"></i>',
+                    'Buy 1 Get 1 Free': '<i class="fas fa-gift"></i>',
+                    'Cashback': '<i class="fas fa-wallet"></i>',
+                    'Loyalty Points': '<i class="fas fa-star"></i>',
+                    'Free Gifts': '<i class="fas fa-box"></i>'
+                };
+
+                // Sort detailed offers: recommended first, then by probability (descending)
+                const sortedOffers = result.detailed_offers.sort((a, b) => {
+                    // Primary sort: recommended (true) comes before not-recommended (false)
+                    if (a.recommended && !b.recommended) return -1;
+                    if (!a.recommended && b.recommended) return 1;
+                    // Secondary sort: if same recommendation status, sort by probability descending
+                    return b.probability - a.probability;
+                });
+
+                if (sortedOffers && sortedOffers.length > 0) {
+                    sortedOffers.forEach(offer => {
+                        const card = document.createElement('div');
+                        card.classList.add('offer-card');
+                        // Add conditional class based on recommendation status
+                        card.classList.add(offer.recommended ? 'recommended' : 'not-recommended');
+
+                        const iconHtml = offerIcons[offer.name] || '<i class="fas fa-percent"></i>'; // Default icon if not found
+                        const description = offer.recommended
+                            ? `This offer type has a high likelihood of being preferred.`
+                            : `This offer type is less likely to be preferred by this customer.`;
+
+                        card.innerHTML = `
+                            <div class="offer-icon">${iconHtml}</div>
+                            <div class="offer-title">${offer.name}</div>
+                            <div class="offer-description">${description}</div>
+                            <div class="probability-bar-container">
+                                <div class="probability-bar" style="width: ${offer.probability}%"></div>
+                            </div>
+                            <div class="probability-text">${offer.probability}% Probability</div>
+                        `;
+                        offerCardsContainer.appendChild(card); // Add card to the grid container
+                    });
+                } else {
+                    noRecommendationMessage.textContent = result.recommendation_text || "No specific offers recommended at this time.";
+                    noRecommendationMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error during offer recommendation:', error);
+                recommendationResultDiv.classList.remove('hidden', 'recommended');
+                recommendationResultDiv.classList.add('error'); // Add error style
+                recommendationResultDiv.style.backgroundColor = '#f8d7da'; /* Error background */
+                recommendationResultDiv.style.borderColor = '#f5c6cb';   /* Error border */
+                recommendationTextElem.textContent = ''; // Clear main text
+                noRecommendationMessage.textContent = `Error getting recommendations: ${error.message || 'An unknown error occurred.'}`;
+                noRecommendationMessage.style.display = 'block';
+                offerCardsContainer.innerHTML = ''; // Clear any partial cards on error
+            });
+        });
+    </script>
+</body>
+</html>

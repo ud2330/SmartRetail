@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartRetail | Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #d0ecf8, #eaf1fa);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      display: flex;
+      width: 90%;
+      max-width: 1000px;
+      background: #fff;
+      box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      animation: fadeInUp 1s ease-in-out;
+    }
+
+    .login-image {
+      flex: 1;
+      background-image: url("/static/login.svg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .login-form {
+      flex: 1;
+      padding: 40px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-form h2 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      color: #1d3557;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .flash-messages {
+      margin-bottom: 15px;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 5px;
+      font-size: 14px;
+      margin-bottom: 10px;
+      border: 1px solid transparent;
+    }
+
+    .alert.error {
+      background-color: #ffe5e5;
+      color: #d8000c;
+      border-color: #f5c6cb;
+    }
+
+    .alert.success {
+      background-color: #e6ffed;
+      color: #2e7d32;
+      border-color: #c3e6cb;
+    }
+
+    .login-form label {
+      font-size: 16px;
+      color: #27496d;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+
+    .login-form input:focus {
+      border-color: #4facfe;
+      outline: none;
+    }
+
+    .login-form .forgot-password {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+
+    .login-form .forgot-password a {
+      color: #27496d;
+      text-decoration: underline;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .login-form .forgot-password a:hover {
+      color: #1d3557;
+    }
+
+    .login-form button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #4facfe, #a0dbff);
+      border: none;
+      color: #27496d;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background 0.3s ease, transform 0.3s ease;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-form button:hover {
+      background: linear-gradient(135deg, #3da9fc, #87c9ff);
+      transform: translateY(-2px);
+    }
+
+    .signup-redirect {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 14px;
+      color: #27496d;
+    }
+
+    .signup-redirect a {
+      color: #1d3557;
+      text-decoration: underline;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    .signup-redirect a:hover {
+      color: #457b9d;
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        flex-direction: column;
+        width: 90%;
+      }
+
+      .login-image {
+        height: 250px;
+      }
+
+      .login-form {
+        padding: 30px 40px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-form h2 {
+        font-size: 28px;
+      }
+
+      .login-form input {
+        font-size: 14px;
+      }
+
+      .login-form button {
+        font-size: 14px;
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-image"></div>
+    <div class="login-form">
+      <h2>Welcome Back!</h2>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('login') }}" method="post">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+
+        <button type="submit">Login</button>
+      </form>
+
+      <div class="signup-redirect">
+        <p>Don't have an account? <a href="{{ url_for('signup') }}">Signup here</a>.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

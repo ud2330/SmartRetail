@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Retail Analytics System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom spinner for loading */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+            display: inline-block; /* Ensure it respects text alignment */
+        }
+
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl p-8 md:p-10 w-full max-w-4xl border border-gray-200">
+        <h1 class="text-4xl font-bold text-center text-indigo-800 mb-8">Smart Retail Analytics</h1>
+
+        <!-- Notification/Message Area -->
+        <div id="message-area" class="mb-6 hidden">
+            <div id="message-content" class="p-4 rounded-lg text-sm font-medium"></div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div id="upload-section" class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-100 shadow-sm">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">1. Upload Your Dataset</h2>
+            <p class="text-gray-600 mb-4">Please upload your customer experience or retail transaction data in CSV format.</p>
+            <input type="file" id="csvFile" accept=".csv" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            <button id="uploadButton" class="mt-6 w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 ease-in-out flex items-center justify-center">
+                <span id="uploadButtonText">Process Data</span>
+                <div id="uploadSpinner" class="spinner ml-2 hidden"></div>
+            </button>
+        </div>
+
+        <!-- Data Exploration Section -->
+        <div id="explore-section" class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-100 shadow-sm hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">2. Explore Your Data</h2>
+            <p class="text-gray-600 mb-4">Select an option below to get insights from your uploaded dataset.</p>
+            <div class="flex flex-wrap gap-4 mb-6">
+                <button id="summaryButton" class="px-5 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition duration-300 ease-in-out flex items-center justify-center" disabled>
+                    View Data Summary
+                    <div id="summarySpinner" class="spinner ml-2 hidden"></div>
+                </button>
+                <button id="correlationButton" class="px-5 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition duration-300 ease-in-out flex items-center justify-center" disabled>
+                    View Correlations
+                    <div id="correlationSpinner" class="spinner ml-2 hidden"></div>
+                </button>
+                <!-- Add more exploration buttons here, e.g., for feature distributions, segmentation, etc. -->
+            </div>
+
+            <!-- Exploration Results Display Area -->
+            <div id="explorationResults" class="mt-4 p-5 bg-indigo-50 rounded-lg border border-indigo-200 hidden">
+                <h3 class="text-xl font-semibold text-indigo-700 mb-3">Results:</h3>
+                <pre id="resultsContent" class="whitespace-pre-wrap text-sm text-gray-800"></pre>
+            </div>
+        </div>
+
+        <!-- Prediction Section (Optional, can be uncommented and linked to specific functionality later) -->
+        <!--
+        <div id="predict-section" class="p-6 bg-gray-50 rounded-lg border border-gray-100 shadow-sm hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">3. Get a Prediction (Advanced)</h2>
+            <p class="text-gray-600 mb-4">If you wish to predict a specific feature, you would select it here and enter values.</p>
+            <div class="mb-4">
+                <label for="predictTargetFeature" class="block text-sm font-medium text-gray-700 mb-2">Select Feature to Predict:</label>
+                <select id="predictTargetFeature" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm bg-white"></select>
+            </div>
+            <form id="predictionForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"></form>
+            <button id="predictButton" class="w-full md:w-auto px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition duration-300 ease-in-out flex items-center justify-center">
+                <span id="predictButtonText">Predict</span>
+                <div id="predictSpinner" class="spinner ml-2 hidden"></div>
+            </button>
+            <div id="predictionResult" class="mt-8 p-5 bg-indigo-50 rounded-lg border border-indigo-200 text-center text-xl font-bold text-indigo-700 hidden">
+                Prediction: <span id="predictionValue"></span>
+            </div>
+        </div>
+        -->
+    </div>
+
+    <script>
+        const csvFileInput = document.getElementById('csvFile');
+        const uploadButton = document.getElementById('uploadButton');
+        const uploadButtonText = document.getElementById('uploadButtonText');
+        const uploadSpinner = document.getElementById('uploadSpinner');
+
+        const exploreSection = document.getElementById('explore-section');
+        const summaryButton = document.getElementById('summaryButton');
+        const summarySpinner = document.getElementById('summarySpinner');
+        const correlationButton = document.getElementById('correlationButton');
+        const correlationSpinner = document.getElementById('correlationSpinner');
+        const explorationResultsDiv = document.getElementById('explorationResults');
+        const resultsContentPre = document.getElementById('resultsContent');
+
+        // Elements for optional prediction section (currently commented out in HTML)
+        // const predictSection = document.getElementById('predict-section');
+        // const predictTargetFeatureSelect = document.getElementById('predictTargetFeature');
+        // const predictionForm = document.getElementById('predictionForm');
+        // const predictButton = document.getElementById('predictButton');
+        // const predictButtonText = document.getElementById('predictButtonText');
+        // const predictSpinner = document.getElementById('predictSpinner');
+        // const predictionResultDiv = document.getElementById('predictionResult');
+        // const predictionValueSpan = document.getElementById('predictionValue');
+
+        const messageArea = document.getElementById('message-area');
+        const messageContent = document.getElementById('message-content');
+
+        function showMessage(message, type = 'info') {
+            messageArea.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+            messageArea.classList.add('block');
+            messageContent.textContent = message;
+            if (type === 'error') {
+                messageContent.classList.add('bg-red-100', 'text-red-700');
+            } else if (type === 'success') {
+                messageContent.classList.add('bg-green-100', 'text-green-700');
+            } else { // info
+                messageContent.classList.add('bg-blue-100', 'text-blue-700');
+            }
+        }
+
+        function hideMessage() {
+            messageArea.classList.add('hidden');
+            resultsContentPre.textContent = ''; // Clear exploration results when new message appears
+            explorationResultsDiv.classList.add('hidden');
+        }
+
+        function showExplorationResults(data, title = "Results") {
+            explorationResultsDiv.classList.remove('hidden');
+            resultsContentPre.textContent = JSON.stringify(data, null, 2); // Pretty print JSON
+        }
+
+        // Function to enable/disable explore buttons
+        function setExploreButtonsEnabled(enabled) {
+            summaryButton.disabled = !enabled;
+            correlationButton.disabled = !enabled;
+            // Add other explore buttons here if you add them
+        }
+
+        // --- Step 1: Upload File ---
+        uploadButton.addEventListener('click', async () => {
+            const file = csvFileInput.files[0];
+            if (!file) {
+                showMessage('Please select a CSV file to upload.', 'error');
+                return;
+            }
+
+            hideMessage();
+            uploadButton.disabled = true;
+            uploadButtonText.textContent = 'Processing...';
+            uploadSpinner.classList.remove('hidden');
+            setExploreButtonsEnabled(false); // Disable explore buttons while uploading
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    exploreSection.classList.remove('hidden'); // Show exploration section
+                    setExploreButtonsEnabled(true); // Enable explore buttons on successful upload
+                    // predictSection.classList.add('hidden'); // Hide prediction section if it exists
+                } else {
+                    showMessage(`Error: ${result.error}`, 'error');
+                    setExploreButtonsEnabled(false); // Keep disabled on error
+                }
+            } catch (error) {
+                showMessage(`Network error: ${error.message}`, 'error');
+                setExploreButtonsEnabled(false); // Keep disabled on network error
+            } finally {
+                uploadButton.disabled = false;
+                uploadButtonText.textContent = 'Process Data';
+                uploadSpinner.classList.add('hidden');
+            }
+        });
+
+        // --- Step 2.1: View Data Summary ---
+        summaryButton.addEventListener('click', async () => {
+            hideMessage();
+            summaryButton.disabled = true;
+            summarySpinner.classList.remove('hidden');
+            setExploreButtonsEnabled(false); // Disable all explore buttons during one operation
+
+            try {
+                const response = await fetch('/get_data_summary', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('Data summary retrieved successfully!', 'success');
+                    showExplorationResults(result.summary, 'Data Summary');
+                } else {
+                    showMessage(`Error retrieving summary: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Network error: ${error.message}`, 'error');
+            } finally {
+                summaryButton.disabled = false;
+                summarySpinner.classList.add('hidden');
+                setExploreButtonsEnabled(true); // Re-enable all explore buttons after operation
+            }
+        });
+
+        // --- Step 2.2: View Correlations ---
+        correlationButton.addEventListener('click', async () => {
+            hideMessage();
+            correlationButton.disabled = true;
+            correlationSpinner.classList.remove('hidden');
+            setExploreButtonsEnabled(false); // Disable all explore buttons during one operation
+
+            try {
+                const response = await fetch('/get_correlations', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('Correlation matrix retrieved successfully!', 'success');
+                    showExplorationResults(result.correlations, 'Correlation Matrix');
+                } else {
+                    showMessage(`Error retrieving correlations: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Network error: ${error.message}`, 'error');
+            } finally {
+                correlationButton.disabled = false;
+                correlationSpinner.classList.add('hidden');
+                setExploreButtonsEnabled(true); // Re-enable all explore buttons after operation
+            }
+        });
+
+        // You can add more event listeners here for other exploration options
+        // For example: Feature Distribution, Customer Segmentation, etc.
+
+        // --- Prediction (If you uncomment the section in HTML later) ---
+        /*
+        trainButton.addEventListener('click', async () => {
+            // Logic to train model for prediction
+        });
+
+        predictButton.addEventListener('click', async () => {
+            // Logic to make a prediction
+        });
+        */
+
+        // Initial state: Disable explore buttons until data is uploaded
+        setExploreButtonsEnabled(false);
+    </script>
+</body>
+</html>

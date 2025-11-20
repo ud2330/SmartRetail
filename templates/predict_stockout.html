@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock-Out Prediction Form</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* General body styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #d0ecf8, #eaf1fa); /* Light blue gradient background */
+            color: #333;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            display: flex; /* Use flexbox for body to align sidebar and main content */
+        }
+
+        /* Hamburger menu icon styling */
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000; /* Ensure it's above other content */
+            background-color: #1d3557;
+            color: white;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px; /* Space between the lines */
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #27496d;
+        }
+
+        .sidebar-toggle .line {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 250px; /* Fixed width for the sidebar */
+            background-color: #1d3557; /* Dark blue background */
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            display: flex;
+            flex-direction: column;
+            position: fixed; /* Keep sidebar fixed */
+            height: 100%; /* Full height */
+            overflow-y: auto; /* Enable scrolling if content overflows */
+            left: 0; /* Position at the left edge */
+            transform: translateX(-100%); /* Initially hide off-screen */
+            transition: transform 0.3s ease-in-out; /* Smooth slide animation */
+            z-index: 999; /* Below the toggle button */
+        }
+
+        /* Class to show the sidebar */
+        body.sidebar-open .sidebar {
+            transform: translateX(0);
+        }
+
+        .sidebar h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #a0dbff; /* Lighter blue for heading */
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1; /* Allow ul to take available space */
+        }
+
+        .sidebar ul li {
+            margin-bottom: 15px;
+        }
+
+        .sidebar ul li a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: #27496d; /* Slightly lighter dark blue on hover */
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li a.active {
+            background: linear-gradient(90deg, #4facfe, #a0dbff); /* Blue gradient for active link */
+            color: #1d3557; /* Dark text for active link */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1; /* Allows main content to take remaining space */
+            padding: 20px; /* Add some padding to main content */
+            display: flex;
+            justify-content: center; /* Center the form within main content */
+            align-items: center; /* Center vertically */
+            min-height: 100vh; /* Ensure it takes full height */
+            box-sizing: border-box; /* Include padding in width */
+            margin-left: 0; /* Default: no offset */
+            transition: margin-left 0.3s ease-in-out; /* Smooth transition for content shift */
+        }
+
+        /* When sidebar is open, shift main content on larger screens */
+        body.sidebar-open .main-content {
+            margin-left: 250px;
+        }
+
+        .container {
+            width: 90%; /* Responsive width */
+            max-width: 800px; /* Reverted to original max-width for the main form container */
+            margin: 0; /* Remove auto margin as parent (main-content) handles centering */
+            background-color: #ffffff;
+            padding: 30px 40px; /* Increased padding for better spacing */
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+            animation: fadeInUp 1s ease-in-out; /* Apply animation */
+            box-sizing: border-box; /* Include padding in width */
+            line-height: 1.6; /* Default line height for better readability */
+        }
+
+        h1 {
+            font-size: 36px; /* Larger, more impactful heading */
+            font-weight: 700; /* Bolder font weight */
+            text-align: center;
+            color: #1d3557; /* Dark blue from your theme */
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 10px; /* Space for the underline effect */
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 80px; /* Shorter underline */
+            height: 4px;
+            background: linear-gradient(135deg, #4facfe, #a0dbff); /* Blue gradient underline */
+            margin: 10px auto 0; /* Center the underline */
+            border-radius: 2px;
+        }
+
+        .disclaimer {
+            font-size: 16px;
+            color: #666;
+            margin-top: -15px; /* Adjust spacing after title */
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 25px; /* More vertical spacing between form groups */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px; /* Space between label and input */
+            font-weight: 600; /* Bolder label text */
+            color: #27496d; /* Consistent dark blue from your theme */
+            font-size: 17px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: calc(100% - 24px); /* Account for padding + border */
+            padding: 12px; /* Larger padding for inputs */
+            border: 1px solid #c2e9fb; /* Lighter border color */
+            border-radius: 8px; /* More rounded inputs */
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif; /* Ensure Poppins font */
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
+            -webkit-appearance: none; /* Remove default browser styling for consistency */
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: #4facfe; /* Highlight on focus */
+            outline: none; /* Remove default outline */
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Soft blue glow on focus */
+        }
+
+        .radio-group, .checkbox-group {
+            margin-top: 10px;
+            display: flex; /* Use flexbox for radio/checkbox groups */
+            flex-wrap: wrap; /* Allow items to wrap */
+            gap: 15px 25px; /* Space between items */
+        }
+
+        /* Custom Checkbox/Radio Styling */
+        .radio-group label, .checkbox-group label {
+            position: relative;
+            padding-left: 30px; /* Adjust this value if you change the indicator size */
+            display: flex; /* Helps with vertical alignment of text and indicator */
+            align-items: center; /* Center content vertically */
+            font-weight: 400; /* Normal weight for options */
+            font-size: 16px;
+            color: #444;
+            cursor: pointer;
+            min-height: 20px; /* Ensure enough height for the custom indicator */
+        }
+
+        /* Hide the default browser checkbox/radio */
+        .radio-group input[type="radio"],
+        .checkbox-group input[type="checkbox"] {
+            opacity: 0;
+            position: absolute;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        /* Style the custom visual indicator (the box/circle) */
+        .custom-control-indicator {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px; /* Size of the custom box/circle */
+            height: 20px; /* Size of the custom box/circle */
+            border: 2px solid #a1c4fd; /* Light blue border */
+            background-color: #eef7ff; /* Light background */
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            border-radius: 4px; /* Default for checkboxes */
+        }
+
+        /* Specific shape for radio buttons */
+        .radio-group .custom-control-indicator {
+            border-radius: 50%; /* Circle for radio */
+        }
+
+        /* When the input is checked, change the background and border of the indicator */
+        .checkbox-group input[type="checkbox"]:checked ~ .custom-control-indicator {
+            background-color: #4facfe; /* Blue background when checked */
+            border-color: #4facfe;
+        }
+
+        .radio-group input[type="radio"]:checked ~ .custom-control-indicator {
+            background-color: #4facfe; /* Blue background when checked */
+            border-color: #4facfe;
+        }
+
+        /* Checkmark/Dot for checked state (inside the indicator) */
+        .custom-control-indicator::after {
+            content: ''; /* Will be overridden for checkbox */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Checkmark for checkboxes */
+        .checkbox-group .custom-control-indicator::after {
+            content: '\2713'; /* Checkmark unicode */
+            font-size: 14px; /* Size of the checkmark */
+            color: white;
+        }
+
+        /* Dot for radio buttons */
+        .radio-group .custom-control-indicator::after {
+            width: 10px; /* Size of the dot */
+            height: 10px; /* Size of the dot */
+            border-radius: 50%;
+            background-color: white;
+        }
+
+        /* Show checkmark/dot when the input is checked */
+        .checkbox-group input[type="checkbox"]:checked ~ .custom-control-indicator::after,
+        .radio-group input[type="radio"]:checked ~ .custom-control-indicator::after {
+            opacity: 1;
+        }
+
+        button[type="submit"] {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #4facfe, #a0dbff);
+            border: none;
+            color: #1d3557; /* Dark text for contrast */
+            font-size: 19px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px; /* Consistent rounded corners */
+            transition: all 0.3s ease;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.15); /* Stronger button shadow */
+            margin-top: 30px;
+            width: 100%; /* Ensure button is full width */
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        #conditionalQuestions {
+            border: 1px dashed #c2e9fb; /* Dotted border for conditional section */
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            background-color: #f7fcff; /* Slightly lighter background */
+        }
+
+        .result {
+            margin-top: 40px;
+            padding: 25px;
+            border-radius: 12px;
+            background-color: #e9ecef; /* Default light grey background */
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for result box */
+        }
+        .result.likely {
+            background-color: #ffe8e8; /* Lighter red for likely */
+            border-color: #ffcccc;
+            color: #c0392b; /* Darker red text */
+        }
+        .result.unlikely {
+            background-color: #e8ffe8; /* Lighter green for unlikely */
+            border-color: #ccffcc;
+            color: #27ae60; /* Darker green text */
+        }
+        .prediction-text {
+            font-size: 1.4em; /* Larger prediction text */
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #1d3557; /* Consistent dark blue */
+        }
+        .probability-text {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .insight-text {
+            font-size: 1em;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+        .chart-container {
+            width: 100%; /* Make it take full width of its parent (.result) */
+            max-width: 500px; /* INCREASED MAX WIDTH for the graph container */
+            margin: 25px auto 0; /* Centered horizontally within .result */
+            background-color: #fff;
+            padding: 20px; /* Increased padding inside the chart container */
+            border-radius: 10px; /* Slightly more rounded corners for the chart box */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Stronger, more prominent shadow */
+            min-height: 0px; /* Increased min-height to give chart more vertical space */
+            display: flex;
+            align-items: center; /* Center content vertically */
+            justify-content: center; /* Center content horizontally */
+        }
+        #probabilityChart {
+            width: 100% !important;
+            height: 150px !important; /* Explicit height for the canvas to control chart size */
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar-toggle {
+                top: 15px;
+                left: 15px;
+                padding: 8px 10px;
+            }
+            .sidebar-toggle .line {
+                width: 20px;
+                height: 2.5px;
+            }
+            .sidebar {
+                width: 200px; /* Slightly narrower sidebar on smaller screens when open */
+            }
+            body.sidebar-open .main-content {
+                margin-left: 0; /* Sidebar overlays, main content doesn't shift */
+            }
+            .container {
+                padding: 25px 30px;
+                margin: 20px auto;
+                max-width: 90%; /* Adjust for smaller screens */
+            }
+            h1 {
+                font-size: 30px;
+            }
+            label {
+                font-size: 16px;
+            }
+            input[type="text"], input[type="number"], select {
+                font-size: 15px;
+                padding: 10px;
+            }
+            .radio-group, .checkbox-group {
+                gap: 10px 15px;
+            }
+            .prediction-text {
+                font-size: 1.2em;
+            }
+            .probability-text {
+                font-size: 0.95em;
+            }
+            .insight-text {
+                font-size: 0.9em;
+            }
+            .chart-container {
+                width: 90%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar-toggle {
+                top: 10px;
+                left: 10px;
+                padding: 6px 8px;
+            }
+            .sidebar-toggle .line {
+                width: 18px;
+                height: 2px;
+            }
+            .sidebar {
+                width: 100%; /* Sidebar takes full width on very small screens */
+                position: fixed; /* Keep it fixed */
+                height: 100vh; /* Full viewport height */
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            body.sidebar-open .main-content {
+                margin-left: 0; /* Main content still not shifted */
+            }
+            .container {
+                padding: 20px;
+                margin: 15px auto;
+                width: 95%; /* Wider on very small screens */
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            h1::after {
+                width: 60px;
+            }
+            .disclaimer {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+            label {
+                font-size: 15px;
+            }
+            input[type="text"], input[type="number"], select {
+                font-size: 14px;
+                padding: 8px;
+            }
+            button[type="submit"] {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+            .radio-group label, .checkbox-group label {
+                font-size: 14px;
+            }
+            .prediction-text {
+                font-size: 1.1em;
+            }
+            .probability-text {
+                font-size: 0.85em;
+            }
+            .insight-text {
+                font-size: 0.8em;
+            }
+            .chart-container {
+                width: 100%;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+        <span class="line"></span>
+        <span class="line"></span>
+        <span class="line"></span>
+    </button>
+
+    <div class="sidebar">
+        <h2>SmartRetail</h2>
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('stockout_form_page') }}" class="active">Stock-Out Predictor</a></li>
+            <li><a href="{{ url_for('sales') }}">Sales Forecast</a></li>
+            <li><a href="{{ url_for('segmentation') }}">Customer Segmentation</a></li>
+            <li><a href="{{ url_for('recommendation') }}">Offer Recomendation</a></li>
+            <li><a href="{{ url_for('trend') }}">Trend Forecasting</a></li>
+            <li><a href="{{ url_for('category_optimization') }}">Category Optimization</a></li>
+            <li><a href="{{ url_for('retention_risk') }}">Retention Risk</a></li>
+            <li><a href="{{ url_for('upload') }}">Upload you data</a></li>
+            
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>Stock-Out Prediction</h1>
+            <p class="disclaimer">Please fill in the following details to predict if a customer is likely to face stock-outs.</p>
+
+            <form id="stockoutForm">
+
+                <div class="form-group">
+                    <label for="shopping_frequency">How often do you shop at supermarkets?</label>
+                    <select id="shopping_frequency" name="Shopping_Frequency" required>
+                        <option value="">--Select--</option>
+                        <option value="Daily">Daily</option>
+                        <option value="2–3 times a week">2–3 times a week</option>
+                        <option value="Once a week">Once a week</option>
+                        <option value="Twice a month">Twice a month</option>
+                        <option value="Rarely">Rarely</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="monthly_grocery_spend">How much do you typically spend on groceries per month? (₹)</label>
+                    <input type="number" id="monthly_grocery_spend" name="Monthly_Grocery_Spend" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Which product categories do you frequently buy? (Select all that apply)</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Groceries">
+                            <span class="control-label-text">Groceries</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Snacks">
+                            <span class="control-label-text">Snacks</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Dairy">
+                            <span class="control-label-text">Dairy</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Beverages">
+                            <span class="control-label-text">Beverages</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Personal Care">
+                            <span class="control-label-text">Personal Care</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Household Items">
+                            <span class="control-label-text">Household Items</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Fruits & Vegetables">
+                            <span class="control-label-text">Fruits & Vegetables</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Packaged Food">
+                            <span class="control-label-text">Packaged Food</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="Frequent_Categories" value="Other">
+                            <span class="control-label-text">Other</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Have you faced stock-outs while shopping?</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="Faced_Stockouts_For_Conditional" value="Yes" required onchange="toggleConditionalQuestions()">
+                            <span class="control-label-text">Yes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Faced_Stockouts_For_Conditional" value="No" onchange="toggleConditionalQuestions()">
+                            <span class="control-label-text">No</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="conditionalQuestions" style="display: none;">
+                    <div class="form-group">
+                        <label for="stockout_frequency">How frequently do you find your preferred items out of stock?</label>
+                        <select id="stockout_frequency" name="Stockout_Frequency">
+                            <option value="">--Select--</option>
+                            <option value="Frequently">Frequently</option>
+                            <option value="Sometimes">Sometimes</option>
+                            <option value="Rarely">Rarely</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stockout_reaction">How do you react when an item is out of stock?</label>
+                        <select id="stockout_reaction" name="Stockout_Reaction">
+                            <option value="">--Select--</option>
+                            <option value="Buy an alternative brand/product">Buy an alternative brand/product</option>
+                            <option value="Come back later">Come back later</option>
+                            <option value="Leave without buying">Leave without buying</option>
+                            <option value="Switch to a different store">Switch to a different store</option>
+                            <option value="Order online">Order online</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Which product categories are often out of stock in your experience? (Select all that apply)</label>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Groceries">
+                                <span class="control-label-text">Groceries</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Snacks">
+                                <span class="control-label-text">Snacks</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Dairy">
+                                <span class="control-label-text">Dairy</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Beverages">
+                                <span class="control-label-text">Beverages</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Personal Care">
+                                <span class="control-label-text">Personal Care</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Household Items">
+                                <span class="control-label-text">Household Items</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Fruits">
+                                <span class="control-label-text">Fruits</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Vegetables">
+                                <span class="control-label-text">Vegetables</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="Stockout_Categories" value="Other">
+                                <span class="control-label-text">Other</span>
+                                <span class="custom-control-indicator"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="acceptable_restock_wait_time">What is the acceptable wait time for restocking (in days)?</label>
+                        <input type="number" id="acceptable_restock_wait_time" name="Acceptable_Restock_Wait_Time" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Do you check online for availability before visiting a store?</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="Check_Online_Availability" value="Yes" required>
+                            <span class="control-label-text">Yes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Check_Online_Availability" value="No">
+                            <span class="control-label-text">No</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Are you willing to pre-order if items are out of stock?</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="Willing_Preorder" value="Yes" required>
+                            <span class="control-label-text">Yes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Willing_Preorder" value="No">
+                            <span class="control-label-text">No</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Would you switch to another store if your preferred items are frequently out of stock?</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="Switch_Store_Stockout" value="Yes" required>
+                            <span class="control-label-text">Yes</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Switch_Store_Stockout" value="No">
+                            <span class="control-label-text">No</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="Switch_Store_Stockout" value="Maybe">
+                            <span class="control-label-text">Maybe</span>
+                            <span class="custom-control-indicator"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit">Predict Stock-Out</button>
+            </form>
+
+            <div id="predictionResult" class="result" style="display: none;">
+                <div class="prediction-text"></div>
+                <div class="probability-text"></div>
+                <div class="insight-text"></div>
+                <div class="chart-container">
+                    <canvas id="probabilityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const ALL_FREQUENT_CATEGORIES_OPTIONS_JS = ['Groceries', 'Snacks', 'Dairy', 'Beverages', 'Personal Care', 'Household Items', 'Fruits & Vegetables', 'Packaged Food', 'Other'];
+    const ALL_STOCKOUT_CATEGORIES_OPTIONS_JS = ['Groceries', 'Snacks', 'Dairy', 'Beverages', 'Personal Care', 'Household Items', 'Fruits', 'Vegetables', 'Other'];
+
+    let myChart = null; // To hold the Chart.js instance
+
+    function toggleConditionalQuestions() {
+        const facedStockoutsRadios = document.querySelectorAll('input[name="Faced_Stockouts_For_Conditional"]');
+        const conditionalDiv = document.getElementById('conditionalQuestions');
+        let facedStockoutsYes = false;
+
+        facedStockoutsRadios.forEach(radio => {
+            if (radio.checked && radio.value === 'Yes') {
+                facedStockoutsYes = true;
+            }
+        });
+
+        if (facedStockoutsYes) {
+            conditionalDiv.style.display = 'block';
+            // Mark required fields in conditional section
+            document.getElementById('stockout_frequency').required = true;
+            document.getElementById('stockout_reaction').required = true;
+            document.getElementById('acceptable_restock_wait_time').required = true;
+        } else {
+            conditionalDiv.style.display = 'none';
+            // Clear and unmark required fields when hidden
+            document.getElementById('stockout_frequency').value = '';
+            document.getElementById('stockout_frequency').required = false;
+            document.getElementById('stockout_reaction').value = '';
+            document.getElementById('stockout_reaction').required = false;
+            document.getElementById('acceptable_restock_wait_time').value = '';
+            document.getElementById('acceptable_restock_wait_time').required = false;
+            document.querySelectorAll('input[name="Stockout_Categories"]').forEach(checkbox => checkbox.checked = false);
+        }
+    }
+
+    document.getElementById('stockoutForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const data = {};
+
+        for (const [key, value] of formData.entries()) {
+            if (key === 'Frequent_Categories' || key === 'Stockout_Categories') {
+                if (!data[key]) {
+                    data[key] = [];
+                }
+                data[key].push(value);
+            } else {
+                data[key] = value;
+            }
+        }
+
+        if (data['Faced_Stockouts_For_Conditional'] === 'No') {
+            data['Stockout_Frequency'] = 'Not Applicable';
+            data['Stockout_Reaction'] = 'Not Applicable';
+            data['Stockout_Categories'] = ['Not Applicable'];
+            data['Acceptable_Restock_Wait_Time'] = 0;
+        }
+        delete data['Faced_Stockouts_For_Conditional']; // Remove temporary field
+
+        console.log("Form Data for Prediction (sent to backend):", data);
+
+        const predictionResultDiv = document.getElementById('predictionResult');
+        const predictionText = predictionResultDiv.querySelector('.prediction-text');
+        const probabilityText = predictionResultDiv.querySelector('.probability-text');
+        const insightText = predictionResultDiv.querySelector('.insight-text');
+        const ctx = document.getElementById('probabilityChart').getContext('2d');
+
+        // Clear previous results, styles, and chart
+        predictionResultDiv.style.display = 'none';
+        predictionResultDiv.classList.remove('likely', 'unlikely');
+        predictionText.textContent = '';
+        probabilityText.textContent = '';
+        insightText.textContent = '';
+        if (myChart) {
+            myChart.destroy(); // Destroy previous chart instance
+        }
+
+
+        fetch('/predict_stockout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(result => {
+            predictionResultDiv.style.display = 'block';
+
+            predictionText.textContent = `Prediction: This customer is ${result.result_text}`;
+            probabilityText.textContent = `Probability: ${result.probability}%`;
+            insightText.textContent = result.insight;
+
+            if (result.prediction === 1) {
+                predictionResultDiv.classList.add('likely');
+            } else {
+                predictionResultDiv.classList.add('unlikely');
+            }
+            console.log("Prediction Result:", result);
+
+            // --- Chart.js Integration ---
+            if (result.visualization_data) {
+                const vizData = result.visualization_data;
+                const chartType = 'bar'; // Remains bar chart
+                const chartLabel = vizData.label || 'Value';
+                const chartValue = vizData.value;
+                const chartMaxValue = vizData.max_value || 100;
+
+                // Function to create a linear gradient
+                function getGradient(ctx, chartArea, colorStart, colorEnd) {
+                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                    gradient.addColorStop(0, colorStart);
+                    gradient.addColorStop(1, colorEnd);
+                    return gradient;
+                }
+
+                myChart = new Chart(ctx, {
+                    type: chartType,
+                    data: {
+                        labels: [chartLabel],
+                        datasets: [{
+                            label: 'Likelihood',
+                            data: [chartValue],
+                            // Dynamic background color with gradient
+                            backgroundColor: function(context) {
+                                const chart = context.chart;
+                                const {ctx, chartArea} = chart;
+                                if (!chartArea) {
+                                    // This case happens on initial chart load
+                                    return;
+                                }
+                                if (result.prediction === 1) { // Likely
+                                    return getGradient(ctx, chartArea, '#e74c3c', '#c0392b'); // Deeper red gradient
+                                } else { // Unlikely
+                                    return getGradient(ctx, chartArea, '#2ecc71', '#27ae60'); // Deeper green gradient
+                                }
+                            },
+                            borderColor: function(context) {
+                                const chart = context.chart;
+                                const {ctx, chartArea} = chart;
+                                if (!chartArea) {
+                                    return;
+                                }
+                                if (result.prediction === 1) { // Likely
+                                    return '#c0392b'; // Darker red border
+                                } else { // Unlikely
+                                    return '#27ae60'; // Darker green border
+                                }
+                            },
+                            borderWidth: 1,
+                            borderRadius: {
+                                topLeft: 8,
+                                topRight: 8,
+                                bottomLeft: 8, // Apply to all corners for a rounded bar
+                                bottomRight: 8
+                            },
+                            // Spacing for a more compact, modern look
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y', // Make it a horizontal bar chart
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Stock-Out Likelihood Prediction',
+                                color: '#333',
+                                font: {
+                                    size: 20,
+                                    weight: '700',
+                                    family: 'Comic Sans MS, Comic Sans, cursive' // Changed to Comic Sans MS
+                                },
+                                padding: {
+                                    top: 20,
+                                    bottom: 20
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#666',
+                                borderWidth: 1,
+                                cornerRadius: 6,
+                                padding: 10,
+                                displayColors: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.x !== null) {
+                                            label += new Intl.NumberFormat('en-IN', { style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(context.parsed.x / 100);
+                                        }
+                                        return label;
+                                    },
+                                    title: function() {
+                                        return 'Prediction';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: chartMaxValue,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    },
+                                    color: '#666',
+                                    font: {
+                                        size: 16,
+                                        family: 'Comic Sans MS, Comic Sans, cursive' // Changed to Comic Sans MS
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)',
+                                    drawBorder: false,
+                                    lineWidth: 1
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Probability (%)',
+                                    color: '#555',
+                                    font: {
+                                        size: 18,
+                                        weight: '500',
+                                        family: 'Comic Sans MS, Comic Sans, cursive' // Changed to Comic Sans MS
+                                    },
+                                    padding: {
+                                        top: 10
+                                    }
+                                }
+                            },
+                            y: {
+                                display: true,
+                                ticks: {
+                                    display: false,
+                                    color: '#666'
+                                },
+                                grid: {
+                                    display: false,
+                                    drawBorder: false
+                                },
+                                barThickness: 50,
+                                minBarLength: 10
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        }
+                    }
+                });
+            }
+
+        })
+        .catch(error => {
+            console.error('Error during prediction:', error);
+            predictionResultDiv.style.display = 'block';
+            predictionResultDiv.classList.add('error');
+            predictionResultDiv.style.backgroundColor = '#f8d7da';
+            predictionResultDiv.style.borderColor = '#f5c6cb';
+            predictionText.textContent = `Error: ${error.message || 'Could not get prediction.'}`;
+            probabilityText.textContent = '';
+            insightText.textContent = '';
+            if (myChart) {
+                myChart.destroy();
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const body = document.body;
+
+        // Set initial state: sidebar is hidden by default
+        body.classList.remove('sidebar-open');
+
+        sidebarToggle.addEventListener('click', () => {
+            body.classList.toggle('sidebar-open');
+        });
+
+        // Initialize conditional questions visibility on load
+        toggleConditionalQuestions();
+    });
+
+
+    document.addEventListener('DOMContentLoaded', toggleConditionalQuestions);
+
+</script>
+</body>
+</html>
